@@ -355,7 +355,7 @@ backend_thread_main(void *arg)
 	
 	MemoryContextInit();
 
-	InitializeLatchSupport();
+	//InitializeLatchSupport();
 	InitProcessLocalLatch();
 	InitializeLatchWaitSet();
 

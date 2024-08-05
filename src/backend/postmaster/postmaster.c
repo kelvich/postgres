@@ -542,11 +542,6 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGUSR2, dummy_handler);	/* unused, reserve for children */
 	pqsignal(SIGCHLD, handle_pm_child_exit_signal);
 
-	/* This may configure SIGURG, depending on platform. */
-	InitializeLatchSupport();
-	InitProcessLocalLatch();
-	PostmasterLatch = MyLatch;
-
 	/*
 	 * No other place in Postgres should touch SIGTTIN/SIGTTOU handling.  We
 	 * ignore those signals in a postmaster environment, so that there is no
@@ -863,6 +858,11 @@ PostmasterMain(int argc, char *argv[])
 		ereport(DEBUG3,
 				(errmsg_internal("-----------------------------------------")));
 	}
+
+	/* This may configure SIGURG, depending on platform. */
+	InitializeLatchSupport();
+	InitProcessLocalLatch();
+	PostmasterLatch = MyLatch;
 
 	/*
 	 * Create lockfile for data directory.
@@ -2238,6 +2238,12 @@ process_pm_child_exit(void)
 				LogChildExit(LOG, _("untracked child process"), id, exitstatus);
 			continue;
 		}
+
+		ereport(LOG,
+				(errmsg_internal("reaping %s process %d: exit code %d",
+								 GetBackendTypeDesc(pmchild->bkend_type),
+								 (int) pmchild->pid.pid,
+								 exitstatus)));
 
 		/*
 		 * Check if this child was a startup process.
@@ -4313,6 +4319,7 @@ typedef struct threadnode
 static slock_t thread_exit_lock;
 static threadnode *thread_exit_head = NULL;
 
+/* this is similar to pgwin32_deadchild_callback() on Windows */
 void
 thread_pre_exit(pthread_t threadid, int code)
 {
@@ -4328,6 +4335,8 @@ thread_pre_exit(pthread_t threadid, int code)
 
 	pending_pm_child_exit = true;
 	SetLatch(PostmasterLatch);
+
+	elog(LOG, "thread_pre_exit called");
 }
 
 static bool
