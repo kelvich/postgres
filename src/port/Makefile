@@ -45,6 +45,7 @@ OBJS = \
 	noblock.o \
 	path.o \
 	pg_bitutils.o \
+	pg_getopt.o \
 	pg_strong_random.o \
 	pgcheckdir.o \
 	pgmkdirp.o \
