@@ -354,6 +354,7 @@ backend_thread_main(void *arg)
 	(void) set_stack_base();
 	
 	MemoryContextInit();
+	InitResourceOwnerAccess();
 
 	//InitializeLatchSupport();
 	InitProcessLocalLatch();
