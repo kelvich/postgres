@@ -28,8 +28,8 @@ typedef struct PgStat_PendingIO
 } PgStat_PendingIO;
 
 
-static PgStat_PendingIO PendingIOStats;
-static bool have_iostats = false;
+static session_local PgStat_PendingIO PendingIOStats;
+static session_local bool have_iostats = false;
 
 
 /*
@@ -196,9 +196,9 @@ pgstat_io_flush_cb(bool nowait)
 	if (!have_iostats)
 		return false;
 
-	bktype_lock = &pgStatLocal.shmem->io.locks[MyBackendType];
+	bktype_lock = &pgStatShared->io.locks[MyBackendType];
 	bktype_shstats =
-		&pgStatLocal.shmem->io.stats.stats[MyBackendType];
+		&pgStatShared->io.stats.stats[MyBackendType];
 
 	if (!nowait)
 		LWLockAcquire(bktype_lock, LW_EXCLUSIVE);
@@ -283,8 +283,8 @@ pgstat_io_reset_all_cb(TimestampTz ts)
 {
 	for (int i = 0; i < BACKEND_NUM_TYPES; i++)
 	{
-		LWLock	   *bktype_lock = &pgStatLocal.shmem->io.locks[i];
-		PgStat_BktypeIO *bktype_shstats = &pgStatLocal.shmem->io.stats.stats[i];
+		LWLock	   *bktype_lock = &pgStatShared->io.locks[i];
+		PgStat_BktypeIO *bktype_shstats = &pgStatShared->io.stats.stats[i];
 
 		LWLockAcquire(bktype_lock, LW_EXCLUSIVE);
 
@@ -293,7 +293,7 @@ pgstat_io_reset_all_cb(TimestampTz ts)
 		 * the reset timestamp as well.
 		 */
 		if (i == 0)
-			pgStatLocal.shmem->io.stats.stat_reset_timestamp = ts;
+			pgStatShared->io.stats.stat_reset_timestamp = ts;
 
 		memset(bktype_shstats, 0, sizeof(*bktype_shstats));
 		LWLockRelease(bktype_lock);
@@ -305,8 +305,8 @@ pgstat_io_snapshot_cb(void)
 {
 	for (int i = 0; i < BACKEND_NUM_TYPES; i++)
 	{
-		LWLock	   *bktype_lock = &pgStatLocal.shmem->io.locks[i];
-		PgStat_BktypeIO *bktype_shstats = &pgStatLocal.shmem->io.stats.stats[i];
+		LWLock	   *bktype_lock = &pgStatShared->io.locks[i];
+		PgStat_BktypeIO *bktype_shstats = &pgStatShared->io.stats.stats[i];
 		PgStat_BktypeIO *bktype_snap = &pgStatLocal.snapshot.io.stats[i];
 
 		LWLockAcquire(bktype_lock, LW_SHARED);
@@ -317,7 +317,7 @@ pgstat_io_snapshot_cb(void)
 		 */
 		if (i == 0)
 			pgStatLocal.snapshot.io.stat_reset_timestamp =
-				pgStatLocal.shmem->io.stats.stat_reset_timestamp;
+				pgStatShared->io.stats.stat_reset_timestamp;
 
 		/* using struct assignment due to better type safety */
 		*bktype_snap = *bktype_shstats;

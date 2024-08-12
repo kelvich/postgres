@@ -39,7 +39,7 @@
 
 PG_MODULE_MAGIC;
 
-static char *archive_directory = NULL;
+static sighup_guc char *archive_directory = NULL;
 
 static bool basic_archive_configured(ArchiveModuleState *state);
 static bool basic_archive_file(ArchiveModuleState *state, const char *file, const char *path);
@@ -53,6 +53,8 @@ static const ArchiveModuleCallbacks basic_archive_callbacks = {
 	.shutdown_cb = NULL
 };
 
+DEFINE_STRING_GUC_ADDR(archive_directory)
+
 /*
  * _PG_init
  *
@@ -64,7 +66,7 @@ _PG_init(void)
 	DefineCustomStringVariable("basic_archive.archive_directory",
 							   gettext_noop("Archive file destination directory."),
 							   NULL,
-							   &archive_directory,
+							   GUC_ADDR(archive_directory),
 							   "",
 							   PGC_SIGHUP,
 							   0,

@@ -17,11 +17,11 @@
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 
-BufferDescPadded *BufferDescriptors;
-char	   *BufferBlocks;
-ConditionVariableMinimallyPadded *BufferIOCVArray;
-WritebackContext BackendWritebackContext;
-CkptSortItem *CkptBufferIds;
+global BufferDescPadded *BufferDescriptors;
+global char	   *BufferBlocks;
+global ConditionVariableMinimallyPadded *BufferIOCVArray;
+session_local WritebackContext BackendWritebackContext;
+global CkptSortItem *CkptBufferIds;
 
 
 /*

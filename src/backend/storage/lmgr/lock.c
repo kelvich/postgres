@@ -49,7 +49,7 @@
 
 
 /* This configuration variable is used to set the lock table size */
-int			max_locks_per_xact; /* set by guc.c */
+postmaster_guc int			max_locks_per_xact; /* set by guc.c */
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -171,7 +171,7 @@ typedef struct TwoPhaseLockRecord
  * would have to initialize that, while for the static array that happens
  * automatically. Doesn't seem worth the extra complexity.
  */
-static int	FastPathLocalUseCounts[FP_LOCK_GROUPS_PER_BACKEND_MAX];
+static session_local int	FastPathLocalUseCounts[FP_LOCK_GROUPS_PER_BACKEND_MAX];
 
 /*
  * Flag to indicate if the relation extension lock is held by this backend.
@@ -186,7 +186,7 @@ static int	FastPathLocalUseCounts[FP_LOCK_GROUPS_PER_BACKEND_MAX];
  * taken for a short duration to extend a particular relation and then
  * released.
  */
-static bool IsRelationExtensionLockHeld PG_USED_FOR_ASSERTS_ONLY = false;
+static session_local bool IsRelationExtensionLockHeld PG_USED_FOR_ASSERTS_ONLY = false;
 
 /*
  * Number of fast-path locks per backend - size of the arrays in PGPROC.
@@ -304,7 +304,7 @@ typedef struct
 	uint32		count[FAST_PATH_STRONG_LOCK_HASH_PARTITIONS];
 } FastPathStrongRelationLockData;
 
-static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
+static volatile global FastPathStrongRelationLockData *FastPathStrongRelationLocks;
 
 
 /*
@@ -313,15 +313,15 @@ static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
  * The LockMethodLockHash and LockMethodProcLockHash hash tables are in
  * shared memory; LockMethodLocalHash is local to each backend.
  */
-static HTAB *LockMethodLockHash;
-static HTAB *LockMethodProcLockHash;
-static HTAB *LockMethodLocalHash;
+static global HTAB *LockMethodLockHash;
+static global HTAB *LockMethodProcLockHash;
+static session_local HTAB *LockMethodLocalHash;
 
 
 /* private state for error cleanup */
-static LOCALLOCK *StrongLockInProgress;
-static LOCALLOCK *awaitedLock;
-static ResourceOwner awaitedOwner;
+static session_local LOCALLOCK *StrongLockInProgress;
+static session_local LOCALLOCK *awaitedLock;
+static session_local ResourceOwner awaitedOwner;
 
 
 #ifdef LOCK_DEBUG
@@ -343,11 +343,11 @@ static ResourceOwner awaitedOwner;
  * --------
  */
 
-int			Trace_lock_oidmin = FirstNormalObjectId;
-bool		Trace_locks = false;
-bool		Trace_userlocks = false;
-int			Trace_lock_table = 0;
-bool		Debug_deadlocks = false;
+session_guc int			Trace_lock_oidmin = FirstNormalObjectId;
+session_guc bool		Trace_locks = false;
+session_guc bool		Trace_userlocks = false;
+session_guc int			Trace_lock_table = 0;
+session_guc bool		Debug_deadlocks = false;
 
 
 inline static bool
@@ -2975,7 +2975,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 VirtualTransactionId *
 GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 {
-	static VirtualTransactionId *vxids;
+	static session_local VirtualTransactionId *vxids;
 	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
 	LockMethod	lockMethodTable;
 	LOCK	   *lock;
