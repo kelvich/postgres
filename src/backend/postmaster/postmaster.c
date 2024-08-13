@@ -472,6 +472,7 @@ pg_global HANDLE		PostmasterHandle;
 void
 PostmasterMain(int argc, char *argv[])
 {
+	pg_getopt_ctx optctx;
 	int			opt;
 	int			status;
 	char	   *userDoption = NULL;
@@ -513,8 +514,8 @@ PostmasterMain(int argc, char *argv[])
 	MemoryContextSwitchTo(PostmasterContext);
 
 	MultiThreadGlobalContext = AllocSetContextCreate(TopMemoryContext,
-											  "multi-thread global",
-											  ALLOCSET_DEFAULT_SIZES);
+													 "multi-thread global",
+													 ALLOCSET_DEFAULT_SIZES);
 
 	/* Initialize paths to installation files */
 	getInstallationPaths(argv[0]);
@@ -571,19 +572,19 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	InitializeGUCOptions(false);
 
-	opterr = 1;
-
 	/*
 	 * Parse command-line options.  CAUTION: keep this in sync with
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "B:bC:c:D:d:EeFf:h:ijk:lN:OPp:r:S:sTt:W:-:")) != -1)
+	pg_getopt_start(&optctx, argc, argv, "B:bC:c:D:d:EeFf:h:ijk:lN:OPp:r:S:sTt:W:-:");
+	optctx.opterr = 1;
+	while ((opt = pg_getopt_next(&optctx)) != -1)
 	{
 		switch (opt)
 		{
 			case 'B':
-				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("shared_buffers", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'b':
@@ -592,7 +593,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'C':
-				output_config_variable = strdup(optarg);
+				output_config_variable = strdup(optctx.optarg);
 				break;
 
 			case 'c':
@@ -601,19 +602,19 @@ PostmasterMain(int argc, char *argv[])
 					char	   *name,
 							   *value;
 
-					ParseLongOption(optarg, &name, &value);
+					ParseLongOption(optctx.optarg, &name, &value);
 					if (!value)
 					{
 						if (opt == '-')
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("--%s requires a value",
-											optarg)));
+											optctx.optarg)));
 						else
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("-c %s requires a value",
-											optarg)));
+											optctx.optarg)));
 					}
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
@@ -623,11 +624,11 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			case 'D':
-				userDoption = strdup(optarg);
+				userDoption = strdup(optctx.optarg);
 				break;
 
 			case 'd':
-				set_debug_options(atoi(optarg), PGC_POSTMASTER, PGC_S_ARGV);
+				set_debug_options(atoi(optctx.optarg), PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'E':
@@ -643,16 +644,16 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'f':
-				if (!set_plan_disabling_options(optarg, PGC_POSTMASTER, PGC_S_ARGV))
+				if (!set_plan_disabling_options(optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV))
 				{
 					write_stderr("%s: invalid argument for option -f: \"%s\"\n",
-								 progname, optarg);
+								 progname, optctx.optarg);
 					ExitPostmaster(1);
 				}
 				break;
 
 			case 'h':
-				SetConfigOption("listen_addresses", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("listen_addresses", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'i':
@@ -664,7 +665,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'k':
-				SetConfigOption("unix_socket_directories", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("unix_socket_directories", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'l':
@@ -672,7 +673,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'N':
-				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("max_connections", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'O':
@@ -684,7 +685,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'p':
-				SetConfigOption("port", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("port", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'r':
@@ -692,7 +693,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'S':
-				SetConfigOption("work_mem", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("work_mem", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 's':
@@ -710,7 +711,7 @@ PostmasterMain(int argc, char *argv[])
 
 			case 't':
 				{
-					const char *tmp = get_stats_option_name(optarg);
+					const char *tmp = get_stats_option_name(optctx.optarg);
 
 					if (tmp)
 					{
@@ -719,14 +720,14 @@ PostmasterMain(int argc, char *argv[])
 					else
 					{
 						write_stderr("%s: invalid argument for option -t: \"%s\"\n",
-									 progname, optarg);
+									 progname, optctx.optarg);
 						ExitPostmaster(1);
 					}
 					break;
 				}
 
 			case 'W':
-				SetConfigOption("post_auth_delay", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("post_auth_delay", optctx.optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			default:
@@ -739,10 +740,10 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Postmaster accepts no non-option switch arguments.
 	 */
-	if (optind < argc)
+	if (optctx.optind < argc)
 	{
 		write_stderr("%s: invalid argument: \"%s\"\n",
-					 progname, argv[optind]);
+					 progname, argv[optctx.optind]);
 		write_stderr("Try \"%s --help\" for more information.\n",
 					 progname);
 		ExitPostmaster(1);
@@ -834,15 +835,6 @@ PostmasterMain(int argc, char *argv[])
 		write_stderr("%s: invalid datetoken tables, please fix\n", progname);
 		ExitPostmaster(1);
 	}
-
-	/*
-	 * Now that we are done processing the postmaster arguments, reset
-	 * getopt(3) library so that it will work correctly in subprocesses.
-	 */
-	optind = 1;
-#ifdef HAVE_INT_OPTRESET
-	optreset = 1;				/* some systems need this too */
-#endif
 
 	/* For debugging: display postmaster environment */
 	{
