@@ -88,7 +88,6 @@ typedef int InheritableSocket;
 typedef struct
 {
 	char		DataDir[MAXPGPATH];
-	int			MyPMChildSlot;
 #ifndef WIN32
 	unsigned long UsedShmemSegID;
 #else
@@ -130,6 +129,8 @@ typedef struct
 	char		my_exec_path[MAXPGPATH];
 	char		pkglib_path[MAXPGPATH];
 
+	int			MyPMChildSlot;
+
 	/*
 	 * These are only used by backend processes, but are here because passing
 	 * a socket needs some special handling on Windows. 'client_sock' is an
@@ -151,13 +152,16 @@ typedef struct
 static void read_backend_variables(char *id, char **startup_data, size_t *startup_data_len);
 static void restore_backend_variables(BackendParameters *param);
 
-static bool save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
+static bool save_backend_variables(BackendParameters *param, int child_slot,
+								   ClientSocket *client_sock,
 #ifdef WIN32
 								   HANDLE childProcess, pid_t childPid,
 #endif
 								   char *startup_data, size_t startup_data_len);
 
-static pid_t internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock);
+static pid_t internal_forkexec(const char *child_kind, int child_slot,
+							   char *startup_data, size_t startup_data_len,
+							   ClientSocket *client_sock);
 
 #endif							/* EXEC_BACKEND */
 
@@ -219,7 +223,7 @@ PostmasterChildName(BackendType child_type)
  * the child process.
  */
 pid_t
-postmaster_child_launch(BackendType child_type,
+postmaster_child_launch(BackendType child_type, int child_slot,
 						char *startup_data, size_t startup_data_len,
 						ClientSocket *client_sock)
 {
@@ -228,7 +232,7 @@ postmaster_child_launch(BackendType child_type,
 	Assert(IsPostmasterEnvironment && !IsUnderPostmaster);
 
 #ifdef EXEC_BACKEND
-	pid = internal_forkexec(child_process_kinds[child_type].name,
+	pid = internal_forkexec(child_process_kinds[child_type].name, child_slot,
 							startup_data, startup_data_len, client_sock);
 	/* the child process will arrive in SubPostmasterMain */
 #else							/* !EXEC_BACKEND */
@@ -256,6 +260,7 @@ postmaster_child_launch(BackendType child_type,
 		 */
 		MemoryContextSwitchTo(TopMemoryContext);
 
+		MyPMChildSlot = child_slot;
 		if (client_sock)
 		{
 			MyClientSocket = palloc(sizeof(ClientSocket));
@@ -282,7 +287,8 @@ postmaster_child_launch(BackendType child_type,
  * - fork():s, and then exec():s the child process
  */
 static pid_t
-internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
+internal_forkexec(const char *child_kind, int child_slot,
+				  char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	static unsigned long tmpBackendFileNum = 0;
 	pid_t		pid;
@@ -302,7 +308,7 @@ internal_forkexec(const char *child_kind, char *startup_data, size_t startup_dat
 	 */
 	paramsz = SizeOfBackendParameters(startup_data_len);
 	param = palloc0(paramsz);
-	if (!save_backend_variables(param, client_sock, startup_data, startup_data_len))
+	if (!save_backend_variables(param, child_slot, client_sock, startup_data, startup_data_len))
 	{
 		pfree(param);
 		return -1;				/* log made by save_backend_variables */
@@ -391,7 +397,8 @@ internal_forkexec(const char *child_kind, char *startup_data, size_t startup_dat
  *	 file is complete.
  */
 static pid_t
-internal_forkexec(const char *child_kind, char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
+internal_forkexec(const char *child_kind, int child_slot,
+				  char *startup_data, size_t startup_data_len, ClientSocket *client_sock)
 {
 	int			retry_count = 0;
 	STARTUPINFO si;
@@ -472,7 +479,9 @@ retry:
 		return -1;
 	}
 
-	if (!save_backend_variables(param, client_sock, pi.hProcess, pi.dwProcessId, startup_data, startup_data_len))
+	if (!save_backend_variables(param, child_slot, client_sock,
+								pi.hProcess, pi.dwProcessId,
+								startup_data, startup_data_len))
 	{
 		/*
 		 * log made by save_backend_variables, but we have to clean up the
@@ -684,7 +693,8 @@ static void read_inheritable_socket(SOCKET *dest, InheritableSocket *src);
 
 /* Save critical backend variables into the BackendParameters struct */
 static bool
-save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
+save_backend_variables(BackendParameters *param,
+					   int child_slot, ClientSocket *client_sock,
 #ifdef WIN32
 					   HANDLE childProcess, pid_t childPid,
 #endif
@@ -701,7 +711,7 @@ save_backend_variables(BackendParameters *param, ClientSocket *client_sock,
 
 	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
-	param->MyPMChildSlot = MyPMChildSlot;
+	param->MyPMChildSlot = child_slot;
 
 #ifdef WIN32
 	param->ShmemProtectiveRegion = ShmemProtectiveRegion;
