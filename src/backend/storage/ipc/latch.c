@@ -548,7 +548,7 @@ OwnLatch(Latch *latch)
 		if (owner_pmchild_slot != 0)
 			elog(PANIC, "latch already owned by proc with slot %d", owner_pmchild_slot);
 
-		latch->owner.pmchild_slot = MyPMChildSlot;
+		latch->owner.pmchild_slot = IsUnderPostmaster ? MyPMChildSlot : POSTMASTER_PMCHILD_SLOT;
 	}
 	else
 	{

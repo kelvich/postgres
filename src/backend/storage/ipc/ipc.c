@@ -155,7 +155,7 @@ proc_exit(int code)
 
 	elog(DEBUG3, "exit(%d)", code);
 
-	if (IsMultiThreaded)
+	if (IsMultiThreaded && IsUnderPostmaster)
 	{
 		thread_pre_exit(pthread_self(), code);
 		pthread_exit((void *) (intptr_t) code);

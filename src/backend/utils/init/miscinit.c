@@ -193,6 +193,10 @@ InitStandaloneProcess(const char *argv0)
 
 	InitProcessGlobals();
 
+	MultiThreadGlobalContext = AllocSetContextCreate(TopMemoryContext,
+													 "multi-thread global",
+													 ALLOCSET_DEFAULT_SIZES);
+
 	/* Initialize process-local latch support */
 	InitializeLatchSupport();
 	InitProcessLocalLatch();
