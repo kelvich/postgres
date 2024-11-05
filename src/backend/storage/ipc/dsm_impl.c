@@ -1068,7 +1068,7 @@ typedef struct dsm_hash_entry
 	void	   *ptr;
 }			dsm_hash_entry;
 
-static global HTAB *dsm_hash = NULL;
+static pg_global HTAB *dsm_hash = NULL;
 
 /*
  * Trivial implementation when running in multithreaded mode.

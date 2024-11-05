@@ -228,7 +228,7 @@ postmaster_guc int			ReservedConnections;
 static pg_global int	NumListenSockets = 0;
 static pg_global pgsocket *ListenSockets = NULL;
 
-static global Latch *PostmasterLatch;
+static pg_global Latch *PostmasterLatch;
 
 /* still more option variables */
 sighup_guc bool		EnableSSL = false;

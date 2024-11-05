@@ -202,8 +202,8 @@ static void WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event);
  */
 #define POSTMASTER_PMCHILD_SLOT		INT_MAX
 
-static global int *thread_wakeup_readfds;
-static global int *thread_wakeup_writefds;
+static pg_global int *thread_wakeup_readfds;
+static pg_global int *thread_wakeup_writefds;
 
 
 
