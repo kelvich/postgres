@@ -111,6 +111,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "tcop/backend_startup.h"
 #include "tcop/tcopprot.h"
 #include "utils/datetime.h"
@@ -3902,7 +3903,7 @@ do_start_bgworker(RegisteredBgWorker *rw)
 			(errmsg_internal("starting background worker process \"%s\"",
 							 rw->rw_worker.bgw_name)));
 
-	if (postmaster_child_launch(B_BG_WORKER, bn->child_slot,
+	if (!postmaster_child_launch(B_BG_WORKER, bn->child_slot,
 								(char *) &rw->rw_worker, sizeof(BackgroundWorker), NULL, &worker_pid))
 	{
 		/* in postmaster, fork failed ... */
