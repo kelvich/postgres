@@ -403,9 +403,9 @@ extern void XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
  * in the startup process.
  */
 #ifndef FRONTEND
-extern PGDLLIMPORT global bool ArchiveRecoveryRequested;
-extern PGDLLIMPORT global bool InArchiveRecovery;
-extern PGDLLIMPORT global bool StandbyMode;
+extern PGDLLIMPORT pg_global bool ArchiveRecoveryRequested;
+extern PGDLLIMPORT pg_global bool InArchiveRecovery;
+extern PGDLLIMPORT pg_global bool StandbyMode;
 extern PGDLLIMPORT sighup_guc char *recoveryRestoreCommand; // FIXME: duplicated in xlogrecovery.h
 #endif
 

@@ -730,7 +730,7 @@ extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, uint64 obji
  */
 
 extern PGDLLIMPORT session_local PgStat_LocalState pgStatLocal;
-extern PGDLLIMPORT global PgStat_ShmemControl *pgStatShared;
+extern PGDLLIMPORT pg_global PgStat_ShmemControl *pgStatShared;
 
 
 /*

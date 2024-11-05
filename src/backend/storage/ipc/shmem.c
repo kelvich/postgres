@@ -78,16 +78,16 @@ static void *ShmemAllocRaw(Size size, Size *allocated_size);
 
 /* shared memory global variables */
 
-static global PGShmemHeader *ShmemSegHdr;	/* shared mem segment header */
+static pg_global PGShmemHeader *ShmemSegHdr;	/* shared mem segment header */
 
-static global void *ShmemBase;			/* start address of shared memory */
+static pg_global void *ShmemBase;			/* start address of shared memory */
 
-static global void *ShmemEnd;			/* end+1 address of shared memory */
+static pg_global void *ShmemEnd;			/* end+1 address of shared memory */
 
-global slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
+pg_global slock_t    *ShmemLock;			/* spinlock for shared memory and LWLock
 												 * allocation */
 
-static global HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
+static pg_global HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
 
 /*

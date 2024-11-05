@@ -106,7 +106,7 @@
 #define MAX_SEND_SIZE (XLOG_BLCKSZ * 16)
 
 /* Array of WalSnds in shared memory */
-global WalSndCtlData *WalSndCtl = NULL;
+pg_global WalSndCtlData *WalSndCtl = NULL;
 
 /* My slot in the shared memory array */
 session_local WalSnd	   *MyWalSnd = NULL;

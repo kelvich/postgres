@@ -132,7 +132,7 @@ StaticAssertDecl(lengthof(SlotInvalidationCauses) == (RS_INVAL_MAX_CAUSES + 1),
 #define SLOT_VERSION	5		/* version for new files */
 
 /* Control array for replication slot management */
-global ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
+pg_global ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
 
 /* My backend's replication slot in the shared memory array */
 session_local ReplicationSlot *MyReplicationSlot = NULL;

@@ -105,7 +105,7 @@ TransactionIdToPage(TransactionId xid)
 /*
  * Link to shared-memory data structures for CLOG control
  */
-static global SlruCtlData XactCtlData;
+static pg_global SlruCtlData XactCtlData;
 
 #define XactCtl (&XactCtlData)
 

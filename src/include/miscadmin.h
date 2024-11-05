@@ -163,10 +163,10 @@ do { \
  * from utils/init/globals.c
  */
 #ifndef FRONTEND
-extern PGDLLIMPORT global pid_t PostmasterPid;
-extern PGDLLIMPORT global bool IsPostmasterEnvironment;
+extern PGDLLIMPORT pg_global pid_t PostmasterPid;
+extern PGDLLIMPORT pg_global bool IsPostmasterEnvironment;
 extern PGDLLIMPORT session_local bool IsUnderPostmaster;
-extern PGDLLIMPORT global bool IsBinaryUpgrade;
+extern PGDLLIMPORT pg_global bool IsBinaryUpgrade;
 
 extern PGDLLIMPORT session_guc bool ExitOnAnyError;
 
@@ -515,7 +515,7 @@ extern void pg_bindtextdomain(const char *domain);
 extern bool has_rolreplication(Oid roleid);
 
 typedef void (*shmem_request_hook_type) (void);
-extern PGDLLIMPORT global shmem_request_hook_type shmem_request_hook;
+extern PGDLLIMPORT pg_global shmem_request_hook_type shmem_request_hook;
 
 extern Size EstimateClientConnectionInfoSpace(void);
 extern void SerializeClientConnectionInfo(Size maxsize, char *start_address);

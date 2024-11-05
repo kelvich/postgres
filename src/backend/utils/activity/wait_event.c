@@ -60,8 +60,8 @@ session_local uint32	   *my_wait_event_info = &local_my_wait_event_info;
  * unlikely that the number of entries will reach
  * WAIT_EVENT_CUSTOM_HASH_MAX_SIZE.
  */
-static global HTAB *WaitEventCustomHashByInfo; /* find names from infos */
-static global HTAB *WaitEventCustomHashByName; /* find infos from names */
+static pg_global HTAB *WaitEventCustomHashByInfo; /* find names from infos */
+static pg_global HTAB *WaitEventCustomHashByName; /* find infos from names */
 
 #define WAIT_EVENT_CUSTOM_HASH_INIT_SIZE	16
 #define WAIT_EVENT_CUSTOM_HASH_MAX_SIZE	128
@@ -88,7 +88,7 @@ typedef struct WaitEventCustomCounterData
 } WaitEventCustomCounterData;
 
 /* pointer to the shared memory */
-static global WaitEventCustomCounterData *WaitEventCustomCounter;
+static pg_global WaitEventCustomCounterData *WaitEventCustomCounter;
 
 /* first event ID of custom wait events */
 #define WAIT_EVENT_CUSTOM_INITIAL_ID	1

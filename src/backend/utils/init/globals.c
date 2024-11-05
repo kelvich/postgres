@@ -102,7 +102,7 @@ bool		MyDatabaseHasLoginEventTriggers = false;
  */
 session_local char	   *DatabasePath = NULL;
 
-global pid_t	PostmasterPid = 0;
+pg_global pid_t	PostmasterPid = 0;
 
 /*
  * IsPostmasterEnvironment is true in a postmaster process and any postmaster
@@ -115,9 +115,9 @@ global pid_t	PostmasterPid = 0;
  *
  * These are initialized for the bootstrap/standalone case.
  */
-global bool		IsPostmasterEnvironment = false;
+pg_global bool		IsPostmasterEnvironment = false;
 session_local bool		IsUnderPostmaster = false;
-global bool		IsBinaryUpgrade = false;
+pg_global bool		IsBinaryUpgrade = false;
 
 session_guc bool		ExitOnAnyError = false;
 

@@ -47,10 +47,10 @@ postmaster_guc bool		ignore_invalid_pages = false;
  * This is updated from xlog.c and xlogrecovery.c, but lives here because
  * it's mostly read by WAL redo functions.
  */
-global bool		InRecovery = false;
+pg_global bool		InRecovery = false;
 
 /* Are we in Hot Standby mode? Only valid in startup process, see xlogutils.h */
-global HotStandbyState standbyState = STANDBY_DISABLED;
+pg_global HotStandbyState standbyState = STANDBY_DISABLED;
 
 /*
  * During XLOG replay, we may see XLOG records for incremental updates of

@@ -108,7 +108,7 @@ static inline bool is_main_region_dsm_handle(dsm_handle handle);
 static session_local bool dsm_init_done = false;
 
 /* Preallocated DSM space in the main shared memory region. */
-static global void *dsm_main_space_begin = NULL;
+static pg_global void *dsm_main_space_begin = NULL;
 
 /*
  * List of dynamic shared memory segments used by this backend.
@@ -136,10 +136,10 @@ static /* FIXME: session_local */ dlist_head dsm_segment_list = DLIST_STATIC_INI
  * reference counted; instead, it lasts for the postmaster's entire
  * life cycle.  For simplicity, it doesn't have a dsm_segment object either.
  */
-static global dsm_handle dsm_control_handle;
-static global dsm_control_header *dsm_control;
-static global Size dsm_control_mapped_size = 0;
-static global void *dsm_control_impl_private = NULL;
+static pg_global dsm_handle dsm_control_handle;
+static pg_global dsm_control_header *dsm_control;
+static pg_global Size dsm_control_mapped_size = 0;
+static pg_global void *dsm_control_impl_private = NULL;
 
 
 /* ResourceOwner callbacks to hold DSM segments */

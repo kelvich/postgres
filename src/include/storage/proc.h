@@ -432,9 +432,9 @@ typedef struct PROC_HDR
 	int			startupBufferPinWaitBufId;
 } PROC_HDR;
 
-extern PGDLLIMPORT global PROC_HDR *ProcGlobal;
+extern PGDLLIMPORT pg_global PROC_HDR *ProcGlobal;
 
-extern PGDLLIMPORT global PGPROC *PreparedXactProcs;
+extern PGDLLIMPORT pg_global PGPROC *PreparedXactProcs;
 
 /*
  * Accessors for getting PGPROC given a ProcNumber and vice versa.

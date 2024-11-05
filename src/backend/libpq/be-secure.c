@@ -33,7 +33,7 @@
 #include "utils/injection_point.h"
 #include "utils/wait_event.h"
 
-char	   *ssl_library;
+pg_global char	   *ssl_library;
 sighup_guc char	   *ssl_cert_file;
 sighup_guc char	   *ssl_key_file;
 sighup_guc char	   *ssl_ca_file;
@@ -44,7 +44,7 @@ sighup_guc char	   *ssl_passphrase_command;
 sighup_guc bool		ssl_passphrase_command_supports_reload;
 
 #ifdef USE_SSL
-bool		ssl_loaded_verify_locations = false;
+pg_global bool		ssl_loaded_verify_locations = false;
 #endif
 
 /* GUC variable controlling SSL cipher list */

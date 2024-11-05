@@ -306,8 +306,8 @@ typedef struct WritebackContext
 } WritebackContext;
 
 /* in buf_init.c */
-extern PGDLLIMPORT global BufferDescPadded *BufferDescriptors;
-extern PGDLLIMPORT global ConditionVariableMinimallyPadded *BufferIOCVArray;
+extern PGDLLIMPORT pg_global BufferDescPadded *BufferDescriptors;
+extern PGDLLIMPORT pg_global ConditionVariableMinimallyPadded *BufferIOCVArray;
 extern PGDLLIMPORT session_local WritebackContext BackendWritebackContext;
 
 /* in localbuf.c */
@@ -381,7 +381,7 @@ typedef struct CkptSortItem
 	int			buf_id;
 } CkptSortItem;
 
-extern PGDLLIMPORT global CkptSortItem *CkptBufferIds;
+extern PGDLLIMPORT pg_global CkptSortItem *CkptBufferIds;
 
 /* ResourceOwner callbacks to hold buffer I/Os and pins */
 extern PGDLLIMPORT const ResourceOwnerDesc buffer_io_resowner_desc;

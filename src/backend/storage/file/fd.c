@@ -539,7 +539,7 @@ pg_flush_data(int fd, off_t offset, off_t nbytes)
 #if defined(HAVE_SYNC_FILE_RANGE)
 	{
 		int			rc;
-		static global bool not_implemented_by_kernel = false;
+		static pg_global bool not_implemented_by_kernel = false;
 
 		if (not_implemented_by_kernel)
 			return;

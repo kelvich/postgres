@@ -227,7 +227,7 @@ typedef struct ReplicationSlotCtlData
 /*
  * Pointers to shared memory
  */
-extern PGDLLIMPORT global ReplicationSlotCtlData *ReplicationSlotCtl;
+extern PGDLLIMPORT pg_global ReplicationSlotCtlData *ReplicationSlotCtl;
 extern PGDLLIMPORT session_local ReplicationSlot *MyReplicationSlot;
 
 /* GUCs */

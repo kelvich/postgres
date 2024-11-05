@@ -185,7 +185,7 @@ static session_local int	LWLockTrancheNamesAllocated = 0;
  * the pointer by fork from the postmaster (except in the EXEC_BACKEND case,
  * where we have special measures to pass it down).
  */
-global LWLockPadded *MainLWLockArray = NULL;
+pg_global LWLockPadded *MainLWLockArray = NULL;
 
 /*
  * We use this structure to keep track of locked LWLocks for release
@@ -224,7 +224,7 @@ static session_local int	NamedLWLockTrancheRequestsAllocated = 0;
 session_local int			NamedLWLockTrancheRequests = 0;
 
 /* points to data in shared memory: */
-global NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
+pg_global NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
 
 static void InitializeLWLocks(void);
 static inline void LWLockReportWaitStart(LWLock *lock);

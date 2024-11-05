@@ -116,7 +116,7 @@ typedef struct
 	WalSnd		walsnds[FLEXIBLE_ARRAY_MEMBER];
 } WalSndCtlData;
 
-extern PGDLLIMPORT global WalSndCtlData *WalSndCtl;
+extern PGDLLIMPORT pg_global WalSndCtlData *WalSndCtl;
 
 
 extern void WalSndSetState(WalSndState state);

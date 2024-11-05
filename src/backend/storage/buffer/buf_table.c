@@ -30,7 +30,7 @@ typedef struct
 	int			id;				/* Associated buffer ID */
 } BufferLookupEnt;
 
-static global HTAB *SharedBufHash;
+static pg_global HTAB *SharedBufHash;
 
 
 /*

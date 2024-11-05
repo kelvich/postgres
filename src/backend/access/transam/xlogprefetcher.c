@@ -196,7 +196,7 @@ static inline void XLogPrefetcherCompleteFilters(XLogPrefetcher *prefetcher,
 static LsnReadQueueNextStatus XLogPrefetcherNextBlock(uintptr_t pgsr_private,
 													  XLogRecPtr *lsn);
 
-static global XLogPrefetchStats *SharedStats;
+static pg_global XLogPrefetchStats *SharedStats;
 
 static inline LsnReadQueue *
 lrq_alloc(uint32 max_distance,

@@ -107,7 +107,7 @@ postmaster_guc int			Unix_socket_permissions;
 postmaster_guc char	   *Unix_socket_group;
 
 /* Where the Unix socket files are (list of palloc'd strings) */
-static global List *sock_paths = NIL;
+static pg_global List *sock_paths = NIL;
 
 /* Internal functions */
 static void socket_comm_reset(void);

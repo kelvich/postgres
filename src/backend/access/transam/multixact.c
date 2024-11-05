@@ -226,8 +226,8 @@ PreviousMultiXactId(MultiXactId multi)
 /*
  * Links to shared-memory data structures for MultiXact control
  */
-static global SlruCtlData MultiXactOffsetCtlData;
-static global SlruCtlData MultiXactMemberCtlData;
+static pg_global SlruCtlData MultiXactOffsetCtlData;
+static pg_global SlruCtlData MultiXactMemberCtlData;
 
 #define MultiXactOffsetCtl	(&MultiXactOffsetCtlData)
 #define MultiXactMemberCtl	(&MultiXactMemberCtlData)
@@ -337,9 +337,9 @@ typedef struct MultiXactStateData
 #define MaxOldestSlot	(MaxBackends + max_prepared_xacts)
 
 /* Pointers to the state data in shared memory */
-static global MultiXactStateData *MultiXactState;
-static global MultiXactId *OldestMemberMXactId;
-static global MultiXactId *OldestVisibleMXactId;
+static pg_global MultiXactStateData *MultiXactState;
+static pg_global MultiXactId *OldestMemberMXactId;
+static pg_global MultiXactId *OldestVisibleMXactId;
 
 
 /*

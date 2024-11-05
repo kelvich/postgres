@@ -266,9 +266,9 @@ typedef enum KAXCompressReason
 } KAXCompressReason;
 
 
-static global ProcArrayStruct *procArray;
+static pg_global ProcArrayStruct *procArray;
 
-static global PGPROC *allProcs;
+static pg_global PGPROC *allProcs;
 
 /*
  * Cache to reduce overhead of repeated calls to TransactionIdIsInProgress()
@@ -278,9 +278,9 @@ static session_local TransactionId cachedXidIsNotInProgress = InvalidTransaction
 /*
  * Bookkeeping for tracking emulated transactions in recovery
  */
-static global TransactionId *KnownAssignedXids;
-static global bool *KnownAssignedXidsValid;
-static global TransactionId latestObservedXid = InvalidTransactionId;
+static pg_global TransactionId *KnownAssignedXids;
+static pg_global bool *KnownAssignedXidsValid;
+static pg_global TransactionId latestObservedXid = InvalidTransactionId;
 
 /*
  * If we're in STANDBY_SNAPSHOT_PENDING state, standbySnapshotPendingXmin is

@@ -101,7 +101,7 @@ struct ProcSignalHeader
 #define BARRIER_CLEAR_BIT(flags, type) \
 	((flags) &= ~(((uint32) 1) << (uint32) (type)))
 
-NON_EXEC_STATIC global ProcSignalHeader *ProcSignal = NULL;
+NON_EXEC_STATIC pg_global ProcSignalHeader *ProcSignal = NULL;
 static session_local ProcSignalSlot *MyProcSignalSlot = NULL;
 
 static bool CheckProcSignal(ProcSignalReason reason);

@@ -86,7 +86,7 @@ extern bool pq_check_connection(void);
 /*
  * prototypes for functions in be-secure.c
  */
-extern PGDLLIMPORT global char *ssl_library;
+extern PGDLLIMPORT pg_global char *ssl_library;
 extern PGDLLIMPORT sighup_guc char *ssl_cert_file;
 extern PGDLLIMPORT sighup_guc char *ssl_key_file;
 extern PGDLLIMPORT sighup_guc char *ssl_ca_file;
@@ -96,7 +96,7 @@ extern PGDLLIMPORT sighup_guc char *ssl_dh_params_file;
 extern PGDLLIMPORT sighup_guc char *ssl_passphrase_command;
 extern PGDLLIMPORT sighup_guc bool ssl_passphrase_command_supports_reload;
 #ifdef USE_SSL
-extern PGDLLIMPORT bool ssl_loaded_verify_locations;
+extern PGDLLIMPORT pg_global bool ssl_loaded_verify_locations;
 #endif
 
 extern int	secure_initialize(bool isServerStart);

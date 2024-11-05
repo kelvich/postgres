@@ -46,12 +46,12 @@
  * that all global variables have been annotated.
  */
 #if __has_attribute (annotate)
-#define global __attribute__((annotate("global")))
+#define pg_global __attribute__((annotate("pg_global")))
 #define dynamic_singleton __attribute__((annotate("dynamic_singleton")))
 #define static_singleton __attribute__((annotate("static_singleton")))
 #define session_local __thread __attribute__((annotate("session_local")))
 #else
-#define global
+#define pg_global
 #define dynamic_singleton
 #define static_singleton
 #define session_local __thread

@@ -170,7 +170,7 @@ extern PGDLLIMPORT session_guc int backend_flush_after;
 extern PGDLLIMPORT sighup_guc int bgwriter_flush_after;
 
 /* in buf_init.c */
-extern PGDLLIMPORT global char *BufferBlocks;
+extern PGDLLIMPORT pg_global char *BufferBlocks;
 
 /* in localbuf.c */
 extern PGDLLIMPORT session_local int NLocBuffer;

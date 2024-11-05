@@ -291,7 +291,7 @@ typedef struct AsyncQueueControl
 	QueueBackendStatus backend[FLEXIBLE_ARRAY_MEMBER];
 } AsyncQueueControl;
 
-static global AsyncQueueControl *asyncQueueControl;
+static pg_global AsyncQueueControl *asyncQueueControl;
 
 #define QUEUE_HEAD					(asyncQueueControl->head)
 #define QUEUE_TAIL					(asyncQueueControl->tail)
@@ -305,7 +305,7 @@ static global AsyncQueueControl *asyncQueueControl;
 /*
  * The SLRU buffer area through which we access the notification queue
  */
-static global SlruCtlData NotifyCtlData;
+static pg_global SlruCtlData NotifyCtlData;
 
 #define NotifyCtl					(&NotifyCtlData)
 #define QUEUE_PAGESIZE				BLCKSZ

@@ -321,7 +321,7 @@
 /*
  * The SLRU buffer area through which we access the old xids.
  */
-static global SlruCtlData SerialSlruCtlData;
+static pg_global SlruCtlData SerialSlruCtlData;
 
 #define SerialSlruCtl			(&SerialSlruCtlData)
 
@@ -351,7 +351,7 @@ typedef struct SerialControlData
 
 typedef struct SerialControlData *SerialControl;
 
-static global SerialControl serialControl;
+static pg_global SerialControl serialControl;
 
 /*
  * When the oldest committed transaction on the "finished" list is moved to
@@ -381,22 +381,22 @@ sighup_guc int			max_predicate_locks_per_page;	/* in guc_tables.c */
  * number of entries in the list, and the size allowed for each entry is
  * fixed upon creation.
  */
-static global PredXactList PredXact;
+static pg_global PredXactList PredXact;
 
 /*
  * This provides a pool of RWConflict data elements to use in conflict lists
  * between transactions.
  */
-static global RWConflictPoolHeader RWConflictPool;
+static pg_global RWConflictPoolHeader RWConflictPool;
 
 /*
  * The predicate locking hash tables are in shared memory.
  * Each backend keeps pointers to them.
  */
-static global HTAB *SerializableXidHash;
-static global HTAB *PredicateLockTargetHash;
-static global HTAB *PredicateLockHash;
-static global dlist_head *FinishedSerializableTransactions;
+static pg_global HTAB *SerializableXidHash;
+static pg_global HTAB *PredicateLockTargetHash;
+static pg_global HTAB *PredicateLockHash;
+static pg_global dlist_head *FinishedSerializableTransactions;
 
 /*
  * Tag for a dummy entry in PredicateLockTargetHash. By temporarily removing
@@ -404,8 +404,8 @@ static global dlist_head *FinishedSerializableTransactions;
  * inserting one entry in the hash table. This is an otherwise-invalid tag.
  */
 static const PREDICATELOCKTARGETTAG ScratchTargetTag = {0, 0, 0, 0};
-static global uint32 ScratchTargetTagHash;
-static global LWLock *ScratchPartitionLock;
+static pg_global uint32 ScratchTargetTagHash;
+static pg_global LWLock *ScratchPartitionLock;
 
 /*
  * The local hash table used to determine when to combine multiple fine-

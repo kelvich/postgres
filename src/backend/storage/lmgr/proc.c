@@ -72,12 +72,12 @@ session_local PGPROC	   *MyProc = NULL;
  * relatively infrequently (only at backend startup or shutdown) and not for
  * very long, so a spinlock is okay.
  */
-NON_EXEC_STATIC global slock_t *ProcStructLock = NULL;
+NON_EXEC_STATIC pg_global slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
-global PROC_HDR   *ProcGlobal = NULL;
-NON_EXEC_STATIC global PGPROC *AuxiliaryProcs = NULL;
-global PGPROC	   *PreparedXactProcs = NULL;
+pg_global PROC_HDR   *ProcGlobal = NULL;
+NON_EXEC_STATIC pg_global PGPROC *AuxiliaryProcs = NULL;
+pg_global PGPROC	   *PreparedXactProcs = NULL;
 
 static session_local DeadLockState deadlock_state = DS_NOT_YET_CHECKED;
 

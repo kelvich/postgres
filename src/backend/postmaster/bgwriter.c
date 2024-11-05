@@ -73,8 +73,8 @@ sighup_guc int			BgWriterDelay = 200;
  * doing so too often or repeatedly if there has been no other write activity
  * in the system.
  */
-static global TimestampTz last_snapshot_ts;
-static global XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
+static pg_global TimestampTz last_snapshot_ts;
+static pg_global XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 
 
 /*

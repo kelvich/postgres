@@ -563,15 +563,15 @@ typedef enum
 	WALINSERT_SPECIAL_CHECKPOINT
 } WalInsertClass;
 
-static global XLogCtlData *XLogCtl = NULL;
+static pg_global XLogCtlData *XLogCtl = NULL;
 
 /* a private copy of XLogCtl->Insert.WALInsertLocks, for convenience */
-static global WALInsertLockPadded *WALInsertLocks = NULL;
+static pg_global WALInsertLockPadded *WALInsertLocks = NULL;
 
 /*
  * We maintain an image of pg_control in shared memory.
  */
-static global ControlFileData *ControlFile = NULL;
+static pg_global ControlFileData *ControlFile = NULL;
 
 /*
  * Calculate the amount of space left on the page after 'endptr'. Beware
@@ -603,7 +603,7 @@ static global ControlFileData *ControlFile = NULL;
 #define ConvertToXSegs(x, segsize)	XLogMBVarToSegs((x), (segsize))
 
 /* The number of bytes in a WAL segment usable for WAL data. */
-static global int	UsableBytesInSegment;
+static pg_global int	UsableBytesInSegment;
 
 /*
  * Private, possibly out-of-date copy of shared LogwrtResult.

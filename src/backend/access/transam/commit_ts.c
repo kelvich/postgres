@@ -80,7 +80,7 @@ TransactionIdToCTsPage(TransactionId xid)
 /*
  * Link to shared-memory data structures for CommitTs control
  */
-static global SlruCtlData CommitTsCtlData;
+static pg_global SlruCtlData CommitTsCtlData;
 
 #define CommitTsCtl (&CommitTsCtlData)
 
@@ -102,7 +102,7 @@ typedef struct CommitTimestampShared
 	bool		commitTsActive;
 } CommitTimestampShared;
 
-static global CommitTimestampShared *commitTsShared;
+static pg_global CommitTimestampShared *commitTsShared;
 
 
 /* GUC variable */

@@ -167,12 +167,12 @@ session_local TimestampTz replorigin_session_origin_timestamp = 0;
  * XXX: Should we use a separate variable to size this rather than
  * max_replication_slots?
  */
-static global ReplicationState *replication_states;
+static pg_global ReplicationState *replication_states;
 
 /*
  * Actual shared memory block (replication_states[] is now part of this).
  */
-static global ReplicationStateCtl *replication_states_ctl;
+static pg_global ReplicationStateCtl *replication_states_ctl;
 
 /*
  * We keep a pointer to this backend's ReplicationState to avoid having to

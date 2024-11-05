@@ -61,7 +61,7 @@ typedef struct PGSemaphoreData
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 static session_local sem_t **mySemPointers;	/* keep track of created semaphores */
 #else
-static global PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
+static pg_global PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
 #endif
 static session_local int	numSems;			/* number of semas acquired so far */
 static session_local int	maxSems;			/* allocated size of above arrays */
