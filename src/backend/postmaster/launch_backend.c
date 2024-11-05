@@ -48,8 +48,10 @@
 #include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "storage/dsm.h"
+#include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "tcop/backend_startup.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 #ifdef EXEC_BACKEND
