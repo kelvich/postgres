@@ -650,6 +650,8 @@ BaseInit(void)
 	 * drop ephemeral slots, which in turn triggers stats reporting.
 	 */
 	ReplicationSlotInitialize();
+
+	InitLockManagerAccess();
 }
 
 
