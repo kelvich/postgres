@@ -1321,7 +1321,7 @@ PostmasterMain(int argc, char *argv[])
 	 * behavior in a multithreaded program.  A multithreaded postmaster is the
 	 * normal case on Windows, which offers neither fork() nor sigprocmask().
 	 */
-	if (pthread_is_threaded_np() != 0)
+	if (pthread_is_threaded_np() != 0 && !IsMultiThreaded)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("postmaster became multithreaded during startup"),
@@ -1690,7 +1690,7 @@ ServerLoop(void)
 		 * With assertions enabled, check regularly for appearance of
 		 * additional threads.  All builds check at start and exit.
 		 */
-		Assert(pthread_is_threaded_np() == 0);
+		Assert(pthread_is_threaded_np() == 0 || IsMultiThreaded);
 #endif
 
 		/*
@@ -3474,7 +3474,7 @@ ExitPostmaster(int status)
 	 * This message uses LOG level, because an unclean shutdown at this point
 	 * would usually not look much different from a clean shutdown.
 	 */
-	if (pthread_is_threaded_np() != 0)
+	if (pthread_is_threaded_np() != 0 && !IsMultiThreaded)
 		ereport(LOG,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg_internal("postmaster became multithreaded"),
