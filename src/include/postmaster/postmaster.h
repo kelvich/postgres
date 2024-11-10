@@ -44,7 +44,7 @@ typedef union
 	pthread_t	threadid;
 } pid_or_threadid;
 
-extern pg_global bool IsMultiThreaded;
+extern postmaster_guc bool IsMultiThreaded;
 static inline bool
 pid_eq(pid_or_threadid a, pid_or_threadid b)
 {
