@@ -140,7 +140,7 @@ process_var(CXCursor current_cursor, std::vector<const char *> annotations)
         fprintf(stderr, "WARNING: Multiple annotations: %s\n", annotation.c_str());
     }
 
-    if (withUnannotated || annotation.empty()) {
+    if (withUnannotated || annotation.empty() || annotations.size() > 1) {
         fprintf(stdout, "[%s]\t%s\t%s\t%s\n",
                 annotation.c_str(),
                 var_name.c_str(),
