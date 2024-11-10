@@ -6,8 +6,13 @@
 // example:
 //   bear -- make -j
 //
-// Another way is to use meson build system (TODO: test it).
+// Another way to get compile_commands.json  is to use meson build system (TODO: test it).
 //
+// Once compile_commands.json is generated, run this program with the root directory of the
+// postgres repository:
+//   ./src/tools/pgguclifetimes/pg_static_vars ./
+//
+
 
 #include <cstdio>
 #include <vector>
