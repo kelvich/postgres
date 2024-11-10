@@ -9,9 +9,6 @@
 // Another way is to use meson build system (TODO: test it).
 //
 
-#include <clang-c/Index.h>
-#include <clang-c/CXCompilationDatabase.h>
-
 #include <cstdio>
 #include <vector>
 #include <format>
@@ -21,10 +18,13 @@
 #include <iostream>
 #include <sstream>
 
+#include <clang-c/Index.h>
+#include <clang-c/CXCompilationDatabase.h>
+
 constexpr bool PRINT_TREE_WALK = false;
 
-bool withUnannotated = false;
-bool skipYacc = true;
+static bool withUnannotated = false;
+static bool skipYacc = true;
 
 struct VisitorData
 {
@@ -33,11 +33,12 @@ struct VisitorData
     std::vector<const char*> annotations;
 };
 
-std::set<std::string> known_vars;
+static  std::set<std::string> known_vars;
 
 // Print relevant information about each node maintaining indentation.
 // Disabled by default, set PRINT_TREE_WALK to enable.
-void debug_tree_node(CXCursor current_cursor, VisitorData* data)
+static void
+debug_tree_node(CXCursor current_cursor, VisitorData* data)
 {
     const CXCursorKind cursor_kind = clang_getCursorKind(current_cursor);
     const bool is_attr = clang_isAttribute(cursor_kind) != 0;
@@ -68,7 +69,8 @@ void debug_tree_node(CXCursor current_cursor, VisitorData* data)
     clang_disposeString(display_name);
 }
 
-void process_var(CXCursor current_cursor, std::vector<const char *> annotations)
+static void
+process_var(CXCursor current_cursor, std::vector<const char *> annotations)
 {
     const CXType type = clang_getCursorType(current_cursor);
 
@@ -142,7 +144,8 @@ void process_var(CXCursor current_cursor, std::vector<const char *> annotations)
     }
 }
 
-static CXChildVisitResult VisitTU(CXCursor current_cursor, CXCursor parent, CXClientData client_data)
+static CXChildVisitResult
+VisitTU(CXCursor current_cursor, CXCursor parent, CXClientData client_data)
 {
     VisitorData* data = reinterpret_cast<VisitorData*>(client_data);
     bool top_var_decl = false;
@@ -181,7 +184,8 @@ static CXChildVisitResult VisitTU(CXCursor current_cursor, CXCursor parent, CXCl
 };
 
 // Function to process each translation unit (TU)
-void processTranslationUnit(const char *filename, CXCompilationDatabase compilationDB) {
+static void
+processTranslationUnit(const char *filename, CXCompilationDatabase compilationDB) {
     // Arguments needed for parsing each TU, usually retrieved from the compilation database
     CXCompileCommands commands = clang_CompilationDatabase_getCompileCommands(compilationDB, filename);
 
@@ -278,7 +282,8 @@ void processTranslationUnit(const char *filename, CXCompilationDatabase compilat
     clang_CompileCommands_dispose(commands);
 }
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
     std::filesystem::path compilationDBPath;
     std::vector<std::string> skipPaths;
     std::vector<std::string> defaultSkipPaths = {

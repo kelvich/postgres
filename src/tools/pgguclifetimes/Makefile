@@ -32,7 +32,7 @@ pgguclifetimes: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -lclang -o $@$(X)
 
 pg_static_vars: pg_static_vars.cpp
-	$(CC) -std=c++20 $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS)  -lc++ -x c++ -lclang -o $@$(X)
+	$(CXX) -std=c++20 $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -Wno-unneeded-internal-declaration -o $@$(X) $<
 
 clean distclean:
 	rm -f pgguclifetimes$(X) pg_static_vars$(X) $(OBJS)
