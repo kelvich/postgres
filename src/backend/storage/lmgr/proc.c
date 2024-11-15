@@ -436,6 +436,7 @@ InitProcess(void)
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
+	MyProc->pmchild = MyPMChildSlot;
 	MyProc->vxid.procNumber = MyProcNumber;
 	MyProc->vxid.lxid = InvalidLocalTransactionId;
 	/* databaseId and roleId will be filled in later */
@@ -615,6 +616,7 @@ InitAuxiliaryProcess(void)
 	/* Mark auxiliary proc as in use by me */
 	/* use volatile pointer to prevent code rearrangement */
 	((volatile PGPROC *) auxproc)->pid = MyProcPid;
+	((volatile PGPROC *) auxproc)->pmchild = MyPMChildSlot;
 
 	SpinLockRelease(ProcStructLock);
 
@@ -949,6 +951,7 @@ ProcKill(int code, Datum arg)
 
 	/* Mark the proc no longer in use */
 	proc->pid = 0;
+	proc->pmchild = 0;
 	proc->vxid.procNumber = INVALID_PROC_NUMBER;
 	proc->vxid.lxid = InvalidTransactionId;
 
@@ -1019,6 +1022,7 @@ AuxiliaryProcKill(int code, Datum arg)
 
 	/* Mark auxiliary proc no longer in use */
 	proc->pid = 0;
+	proc->pmchild = 0;
 	proc->vxid.procNumber = INVALID_PROC_NUMBER;
 	proc->vxid.lxid = InvalidTransactionId;
 

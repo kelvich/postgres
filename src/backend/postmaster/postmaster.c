@@ -2237,6 +2237,12 @@ process_pm_child_exit(void)
 			continue;
 		}
 
+		ereport(LOG,
+				(errmsg_internal("reaping %s process %d: exit code %d",
+								 GetBackendTypeDesc(pmchild->bkend_type),
+								 (int) pmchild->pid.pid,
+								 exitstatus)));
+
 		/*
 		 * Check if this child was a startup process.
 		 */
@@ -4295,6 +4301,7 @@ typedef struct threadnode
 static slock_t thread_exit_lock;
 static threadnode *thread_exit_head = NULL;
 
+/* this is similar to pgwin32_deadchild_callback() on Windows */
 void
 thread_pre_exit(pthread_t threadid, int code)
 {
@@ -4310,6 +4317,8 @@ thread_pre_exit(pthread_t threadid, int code)
 
 	pending_pm_child_exit = true;
 	RaiseInterrupt(INTERRUPT_GENERAL_WAKEUP);
+
+	elog(LOG, "thread_pre_exit called");
 }
 
 static bool

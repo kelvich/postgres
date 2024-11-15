@@ -1017,7 +1017,7 @@ RequestCheckpoint(int flags)
 		}
 		else
 		{
-			SetLatch(&GetPGProcByNumber(checkpointerProc)->procLatch);
+			SendInterrupt(INTERRUPT_GENERAL_WAKEUP, checkpointerProc);
 			break;				/* signal sent successfully */
 		}
 
