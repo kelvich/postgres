@@ -228,6 +228,8 @@ postmaster_guc int			ReservedConnections;
 static pg_global int	NumListenSockets = 0;
 static pg_global pgsocket *ListenSockets = NULL;
 
+static pg_global Latch *PostmasterLatch;
+
 /* still more option variables */
 sighup_guc bool		EnableSSL = false;
 
@@ -399,7 +401,6 @@ static void CloseServerPorts(int status, Datum arg);
 static void unlink_external_pid_file(int status, Datum arg);
 static void getInstallationPaths(const char *argv0);
 static void checkControlFile(void);
-static void handle_pm_pmsignal_signal(SIGNAL_ARGS);
 static void handle_pm_child_exit_signal(SIGNAL_ARGS);
 static void handle_pm_reload_request_signal(SIGNAL_ARGS);
 static void handle_pm_shutdown_request_signal(SIGNAL_ARGS);
@@ -1935,7 +1936,7 @@ InitProcessGlobals(void)
  * Child processes use SIGUSR1 to notify us of 'pmsignals'.  pg_ctl uses
  * SIGUSR1 to ask postmaster to check for logrotate and promote files.
  */
-static void
+void
 handle_pm_pmsignal_signal(SIGNAL_ARGS)
 {
 	pending_pm_pmsignal = true;

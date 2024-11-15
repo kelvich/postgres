@@ -51,6 +51,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/waiteventset.h"
 #include "tcop/backend_startup.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 #ifdef EXEC_BACKEND
