@@ -81,8 +81,8 @@
 
 #include <signal.h>
 
-extern PGDLLIMPORT pg_atomic_uint32 *MyPendingInterrupts;
-extern PGDLLIMPORT pg_atomic_uint32 *MyMaybeSleepingOnInterrupts;
+extern PGDLLIMPORT session_local pg_atomic_uint32 *MyPendingInterrupts;
+extern PGDLLIMPORT session_local pg_atomic_uint32 *MyMaybeSleepingOnInterrupts;
 
 typedef enum
 {
@@ -158,5 +158,6 @@ extern int	WaitInterruptOrSocket(uint32 interruptMask, int wakeEvents, pgsocket 
 extern void SwitchToLocalInterrupts(void);
 extern void SwitchToSharedInterrupts(void);
 extern void InitializeInterruptWaitSet(void);
+extern void InitializeInterruptSupport(void);
 
 #endif

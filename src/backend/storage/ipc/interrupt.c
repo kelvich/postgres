@@ -26,11 +26,18 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
-static pg_atomic_uint32 LocalPendingInterrupts;
-static pg_atomic_uint32 LocalMaybeSleepingOnInterrupts;
+static session_local pg_atomic_uint32 LocalPendingInterrupts;
+static session_local pg_atomic_uint32 LocalMaybeSleepingOnInterrupts;
 
-pg_atomic_uint32 *MyPendingInterrupts = &LocalPendingInterrupts;
-pg_atomic_uint32 *MyMaybeSleepingOnInterrupts = &LocalMaybeSleepingOnInterrupts;
+session_local pg_atomic_uint32 *MyPendingInterrupts;
+session_local pg_atomic_uint32 *MyMaybeSleepingOnInterrupts;
+
+void
+InitializeInterruptSupport(void)
+{
+	MyPendingInterrupts = &LocalPendingInterrupts;
+	MyMaybeSleepingOnInterrupts = &LocalMaybeSleepingOnInterrupts;
+}
 
 /*
  * Switch to local interrupts.  Other backends can't send interrupts to this
