@@ -752,32 +752,38 @@ BackgroundWorkerMain(char *startup_data, size_t startup_data_len)
 	/*
 	 * Set up signal handlers.
 	 */
-	if (worker->bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+	if (!IsMultiThreaded)
 	{
-		/*
-		 * SIGINT is used to signal canceling the current action
-		 */
-		pqsignal(SIGINT, StatementCancelHandler);
-		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-		pqsignal(SIGFPE, FloatExceptionHandler);
+		if (worker->bgw_flags & BGWORKER_BACKEND_DATABASE_CONNECTION)
+		{
+			/*
+			 * SIGINT is used to signal canceling the current action
+			 */
+			pqsignal(SIGINT, StatementCancelHandler);
+			pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+			pqsignal(SIGFPE, FloatExceptionHandler);
 
-		/* XXX Any other handlers needed here? */
+			/* XXX Any other handlers needed here? */
+		}
+		else
+		{
+			pqsignal(SIGINT, SIG_IGN);
+			pqsignal(SIGUSR1, SIG_IGN);
+			pqsignal(SIGFPE, SIG_IGN);
+		}
+		pqsignal(SIGTERM, bgworker_die);
+		/* SIGQUIT handler was already set up by InitPostmasterChild */
+		pqsignal(SIGHUP, SIG_IGN);
 	}
-	else
-	{
-		pqsignal(SIGINT, SIG_IGN);
-		pqsignal(SIGUSR1, SIG_IGN);
-		pqsignal(SIGFPE, SIG_IGN);
-	}
-	pqsignal(SIGTERM, bgworker_die);
-	/* SIGQUIT handler was already set up by InitPostmasterChild */
-	pqsignal(SIGHUP, SIG_IGN);
 
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR2, SIG_IGN);
-	pqsignal(SIGCHLD, SIG_DFL);
+	if (!IsMultiThreaded)
+	{
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR2, SIG_IGN);
+		pqsignal(SIGCHLD, SIG_DFL);
+	}
 
 	/*
 	 * If an exception is encountered, processing resumes here.
@@ -922,13 +928,15 @@ BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, uint32 flags)
 void
 BackgroundWorkerBlockSignals(void)
 {
-	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
+	if (!IsMultiThreaded)
+		sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 }
 
 void
 BackgroundWorkerUnblockSignals(void)
 {
-	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
+	if (!IsMultiThreaded)
+		sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 }
 
 /*

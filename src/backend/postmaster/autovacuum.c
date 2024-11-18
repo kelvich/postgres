@@ -389,18 +389,24 @@ AutoVacLauncherMain(char *startup_data, size_t startup_data_len)
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, SignalHandlerForConfigReload);
-	pqsignal(SIGINT, StatementCancelHandler);
-	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
-	/* SIGQUIT handler was already set up by InitPostmasterChild */
+	if (!IsMultiThreaded)
+	{
+		pqsignal(SIGHUP, SignalHandlerForConfigReload);
+		pqsignal(SIGINT, StatementCancelHandler);
+		pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
+		/* SIGQUIT handler was already set up by InitPostmasterChild */
+	}
 
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, avl_sigusr2_handler);
-	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, SIG_DFL);
+	if (!IsMultiThreaded)
+	{
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+		pqsignal(SIGUSR2, avl_sigusr2_handler);
+		pqsignal(SIGFPE, FloatExceptionHandler);
+		pqsignal(SIGCHLD, SIG_DFL);
+	}
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory.  We must do this
@@ -502,7 +508,8 @@ AutoVacLauncherMain(char *startup_data, size_t startup_data_len)
 	PG_exception_stack = &local_sigjmp_buf;
 
 	/* must unblock signals before calling rebuild_database_list */
-	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
+	if (!IsMultiThreaded)
+		sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path.  Launcher doesn't connect to a database,
@@ -1382,23 +1389,29 @@ AutoVacWorkerMain(char *startup_data, size_t startup_data_len)
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, SignalHandlerForConfigReload);
+	if (!IsMultiThreaded)
+	{
+		pqsignal(SIGHUP, SignalHandlerForConfigReload);
 
-	/*
-	 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
-	 * means abort and exit cleanly, and SIGQUIT means abandon ship.
-	 */
-	pqsignal(SIGINT, StatementCancelHandler);
-	pqsignal(SIGTERM, die);
-	/* SIGQUIT handler was already set up by InitPostmasterChild */
+		/*
+		 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
+		 * means abort and exit cleanly, and SIGQUIT means abandon ship.
+		 */
+		pqsignal(SIGINT, StatementCancelHandler);
+		pqsignal(SIGTERM, die);
+		/* SIGQUIT handler was already set up by InitPostmasterChild */
+	}
 
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
-	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, SIG_IGN);
-	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, SIG_DFL);
+	if (!IsMultiThreaded)
+	{
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
+		pqsignal(SIGUSR2, SIG_IGN);
+		pqsignal(SIGFPE, FloatExceptionHandler);
+		pqsignal(SIGCHLD, SIG_DFL);
+	}
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory.  We must do this
@@ -1444,7 +1457,8 @@ AutoVacWorkerMain(char *startup_data, size_t startup_data_len)
 	/* We can now handle ereport(ERROR) */
 	PG_exception_stack = &local_sigjmp_buf;
 
-	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
+	if (!IsMultiThreaded)
+		sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
 
 	/*
 	 * Set always-secure search path, so malicious users can't redirect user
