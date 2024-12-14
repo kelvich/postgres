@@ -60,74 +60,74 @@ session_local char	   *pg_optarg;				/* argument associated with option */
  *
  * This implementation does not use optreset.  Instead, we guarantee that
  * it can be restarted on a new argv array after a previous call returned -1,
- * if the caller resets optind to 1 before the first call of the new series.
+ * if the caller resets pg_optind to 1 before the first call of the new series.
  * (Internally, this means we must be sure to reset "place" to EMSG before
  * returning -1.)
  */
 int
-getopt(int nargc, char *const *nargv, const char *ostr)
+pg_getopt(int nargc, char *const *nargv, const char *ostr)
 {
-	static char *place = EMSG;	/* option letter processing */
+	static session_local char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
 
 	if (!*place)
 	{							/* update scanning pointer */
-		if (optind >= nargc || *(place = nargv[optind]) != '-')
+		if (pg_optind >= nargc || *(place = nargv[pg_optind]) != '-')
 		{
 			place = EMSG;
 			return -1;
 		}
 		if (place[1] && *++place == '-' && place[1] == '\0')
 		{						/* found "--" */
-			++optind;
+			++pg_optind;
 			place = EMSG;
 			return -1;
 		}
 	}							/* option letter okay? */
-	if ((optopt = (int) *place++) == (int) ':' ||
-		!(oli = strchr(ostr, optopt)))
+	if ((pg_optopt = (int) *place++) == (int) ':' ||
+		!(oli = strchr(ostr, pg_optopt)))
 	{
 		/*
 		 * if the user didn't specify '-' as an option, assume it means -1.
 		 */
-		if (optopt == (int) '-')
+		if (pg_optopt == (int) '-')
 		{
 			place = EMSG;
 			return -1;
 		}
 		if (!*place)
-			++optind;
-		if (opterr && *ostr != ':')
+			++pg_optind;
+		if (pg_opterr && *ostr != ':')
 			(void) fprintf(stderr,
-						   "illegal option -- %c\n", optopt);
+						   "illegal option -- %c\n", pg_optopt);
 		return BADCH;
 	}
 	if (*++oli != ':')
 	{							/* don't need argument */
-		optarg = NULL;
+		pg_optarg = NULL;
 		if (!*place)
-			++optind;
+			++pg_optind;
 	}
 	else
 	{							/* need an argument */
 		if (*place)				/* no white space */
-			optarg = place;
-		else if (nargc <= ++optind)
+			pg_optarg = place;
+		else if (nargc <= ++pg_optind)
 		{						/* no arg */
 			place = EMSG;
 			if (*ostr == ':')
 				return BADARG;
-			if (opterr)
+			if (pg_opterr)
 				(void) fprintf(stderr,
 							   "option requires an argument -- %c\n",
-							   optopt);
+							   pg_optopt);
 			return BADCH;
 		}
 		else
 			/* white space */
-			optarg = nargv[optind];
+			pg_optarg = nargv[pg_optind];
 		place = EMSG;
-		++optind;
+		++pg_optind;
 	}
-	return optopt;				/* dump back option letter */
+	return pg_optopt;				/* dump back option letter */
 }

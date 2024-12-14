@@ -663,15 +663,16 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	InitializeGUCOptions();
 
-	opterr = 1;
+	pg_opterr = 1;
 
 	/*
 	 * Parse command-line options.  CAUTION: keep this in sync with
 	 * tcop/postgres.c (the option sets should not conflict) and with the
 	 * common help() function in main/main.c.
 	 */
-	while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
+	while ((opt = pg_getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
 	{
+		char *optarg = pg_optarg;
 		switch (opt)
 		{
 			case 'B':
@@ -844,10 +845,10 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Postmaster accepts no non-option switch arguments.
 	 */
-	if (optind < argc)
+	if (pg_optind < argc)
 	{
 		write_stderr("%s: invalid argument: \"%s\"\n",
-					 progname, argv[optind]);
+					 progname, argv[pg_optind]);
 		write_stderr("Try \"%s --help\" for more information.\n",
 					 progname);
 		ExitPostmaster(1);
@@ -914,7 +915,7 @@ PostmasterMain(int argc, char *argv[])
 	 * Now that we are done processing the postmaster arguments, reset
 	 * getopt(3) library so that it will work correctly in subprocesses.
 	 */
-	optind = 1;
+	pg_optind = 1;
 #ifdef HAVE_INT_OPTRESET
 	optreset = 1;				/* some systems need this too */
 #endif
