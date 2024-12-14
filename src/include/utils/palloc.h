@@ -94,6 +94,14 @@ extern void pfree(void *pointer);
 		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
 		MemoryContextAllocZero(CurrentMemoryContext, sz) )
 
+#define top_malloc(sz)  MemoryContextAlloc(TopMemoryContext, sz)
+#define top_realloc(ptr,newsz) repalloc(ptr, newsz)
+#define top_free(ptr)   do if (ptr) pfree(ptr); while(0)
+#define top_strdup(str) MemoryContextStrdup(TopMemoryContext, str)
+
+extern char* top_strgrab(char* str);
+
+
 /* Higher-limit allocators. */
 extern void *MemoryContextAllocHuge(MemoryContext context, Size size);
 extern void *repalloc_huge(void *pointer, Size size);

@@ -224,7 +224,11 @@ MemoryContextDelete(MemoryContext context)
 
 	context->methods->delete_context(context);
 	VALGRIND_DESTROY_MEMPOOL(context);
-	pfree(context);
+	if (context == TopMemoryContext) {
+		free(context);
+	} else { 
+		pfree(context);
+	}
 }
 
 /*
@@ -842,6 +846,15 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 		MemSetAligned(ret, 0, size);
 
 	return ret;
+}
+
+char* top_strgrab(char* str)
+{
+	size_t len = strlen(str) + 1;
+	char* copy = top_malloc(len);
+	memcpy(copy, str, len);
+	free(str);
+	return copy;
 }
 
 void *
