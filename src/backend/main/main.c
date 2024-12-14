@@ -42,9 +42,10 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
+#include "miscadmin.h"
 
 
-const char *progname;
+session_local const char *progname;
 
 
 static void startup_hacks(const char *progname);

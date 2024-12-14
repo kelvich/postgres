@@ -17,6 +17,14 @@
 #include <getopt.h>
 #endif
 
+extern session_local char *pg_optarg;
+extern session_local int	pg_optind;
+extern session_local int	pg_opterr;
+extern session_local int	pg_optopt;
+
+extern int	pg_getopt(int nargc, char *const *nargv, const char *ostr);
+
+
 /*
  * If we have <getopt.h>, assume it declares these variables, else do that
  * ourselves.  (We used to just declare them unconditionally, but Cygwin

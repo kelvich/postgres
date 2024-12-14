@@ -51,7 +51,7 @@
 
 
 /* This configuration variable is used to set the lock table size */
-int			max_locks_per_xact; /* set by guc.c */
+session_local int			max_locks_per_xact; /* set by guc.c */
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
@@ -168,7 +168,7 @@ typedef struct TwoPhaseLockRecord
  * our locks to the primary lock table, but it can never be lower than the
  * real value, since only we can acquire locks on our own behalf.
  */
-static int	FastPathLocalUseCount = 0;
+static session_local int	FastPathLocalUseCount = 0;
 
 /* Macros for manipulating proc->fpLockBits */
 #define FAST_PATH_BITS_PER_SLOT			3
@@ -252,13 +252,13 @@ static volatile FastPathStrongRelationLockData *FastPathStrongRelationLocks;
  */
 static HTAB *LockMethodLockHash;
 static HTAB *LockMethodProcLockHash;
-static HTAB *LockMethodLocalHash;
+static session_local HTAB *LockMethodLocalHash;
 
 
 /* private state for error cleanup */
-static LOCALLOCK *StrongLockInProgress;
-static LOCALLOCK *awaitedLock;
-static ResourceOwner awaitedOwner;
+static session_local LOCALLOCK *StrongLockInProgress;
+static session_local LOCALLOCK *awaitedLock;
+static session_local ResourceOwner awaitedOwner;
 
 
 #ifdef LOCK_DEBUG
@@ -280,11 +280,11 @@ static ResourceOwner awaitedOwner;
  * --------
  */
 
-int			Trace_lock_oidmin = FirstNormalObjectId;
-bool		Trace_locks = false;
-bool		Trace_userlocks = false;
-int			Trace_lock_table = 0;
-bool		Debug_deadlocks = false;
+session_local int			Trace_lock_oidmin = FirstNormalObjectId;
+session_local bool		Trace_locks = false;
+session_local bool		Trace_userlocks = false;
+session_local int			Trace_lock_table = 0;
+session_local bool		Debug_deadlocks = false;
 
 
 inline static bool
@@ -2744,7 +2744,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 VirtualTransactionId *
 GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode)
 {
-	static VirtualTransactionId *vxids;
+	static session_local VirtualTransactionId *vxids;
 	LOCKMETHODID lockmethodid = locktag->locktag_lockmethodid;
 	LockMethod	lockMethodTable;
 	LOCK	   *lock;

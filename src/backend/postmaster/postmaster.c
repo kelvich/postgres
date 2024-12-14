@@ -181,24 +181,24 @@ typedef struct bkend
 	dlist_node	elem;			/* list link in BackendList */
 } Backend;
 
-static dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
+static session_local dlist_head BackendList = DLIST_STATIC_INIT(BackendList);
 
 #ifdef EXEC_BACKEND
 static Backend *ShmemBackendArray;
 #endif
 
-BackgroundWorker *MyBgworkerEntry = NULL;
+session_local BackgroundWorker *MyBgworkerEntry = NULL;
 
 
 
 /* The socket number we are listening for connections on */
-int			PostPortNumber;
+session_local int			PostPortNumber;
 
 /* The directory names for Unix socket(s) */
-char	   *Unix_socket_directories;
+session_local char	   *Unix_socket_directories;
 
 /* The TCP listen address(es) */
-char	   *ListenAddresses;
+session_local char	   *ListenAddresses;
 
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
@@ -209,16 +209,16 @@ char	   *ListenAddresses;
  * can make new connections" --- pre-existing superuser connections don't
  * count against the limit.
  */
-int			ReservedBackends;
+session_local int			ReservedBackends;
 
 /* The socket(s) we're listening to. */
 #define MAXLISTEN	64
-static pgsocket ListenSocket[MAXLISTEN];
+static session_local pgsocket ListenSocket[MAXLISTEN];
 
 /*
  * Set by the -o option
  */
-static char ExtraOptions[MAXPGPATH];
+static session_local char ExtraOptions[MAXPGPATH];
 
 /*
  * These globals control the behavior of the postmaster in case some
@@ -227,25 +227,26 @@ static char ExtraOptions[MAXPGPATH];
  * the postmaster stop (rather than kill) peers and not reinitialize
  * shared data structures.  (Reinit is currently dead code, though.)
  */
-static bool Reinit = true;
-static int	SendStop = false;
+static session_local bool Reinit = true;
+static session_local int	SendStop = false;
 
 /* still more option variables */
-bool		EnableSSL = false;
+session_local bool		EnableSSL = false;
 
-int			PreAuthDelay = 0;
-int			AuthenticationTimeout = 60;
+session_local int			PreAuthDelay = 0;
+session_local int			AuthenticationTimeout = 60;
 
-bool		log_hostname;		/* for ps display and logging */
-bool		Log_connections = false;
-bool		Db_user_namespace = false;
+session_local bool		log_hostname;		/* for ps display and logging */
+session_local bool		Log_connections = false;
+session_local bool		Db_user_namespace = false;
 
-bool		enable_bonjour = false;
-char	   *bonjour_name;
-bool		restart_after_crash = true;
+session_local bool		enable_bonjour = false;
+session_local char	   *bonjour_name;
+session_local bool		restart_after_crash = true;
+session_local int       thread_stack_size;
 
 /* PIDs of special child processes; 0 when not running */
-static pid_t StartupPID = 0,
+static session_local pthread_t StartupPID = 0,
 			BgWriterPID = 0,
 			CheckpointerPID = 0,
 			WalWriterPID = 0,
@@ -264,7 +265,7 @@ typedef enum
 	STARTUP_CRASHED
 } StartupStatusEnum;
 
-static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
+static session_local StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -272,9 +273,9 @@ static StartupStatusEnum StartupStatus = STARTUP_NOT_RUNNING;
 #define			FastShutdown	2
 #define			ImmediateShutdown	3
 
-static int	Shutdown = NoShutdown;
+static session_local int	Shutdown = NoShutdown;
 
-static bool FatalError = false; /* T if recovering from backend crash */
+static session_local bool FatalError = false; /* T if recovering from backend crash */
 
 /*
  * We use a simple state machine to control startup, shutdown, and
@@ -336,34 +337,34 @@ typedef enum
 	PM_NO_CHILDREN				/* all important children have exited */
 } PMState;
 
-static PMState pmState = PM_INIT;
+static session_local PMState pmState = PM_INIT;
 
 /* Start time of SIGKILL timeout during immediate shutdown or child crash */
 /* Zero means timeout is not running */
-static time_t AbortStartTime = 0;
+static session_local time_t AbortStartTime = 0;
 
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
-static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
+static session_local bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;	/* T during new-client
+session_local bool		ClientAuthInProgress = false;	/* T during new-client
 											 * authentication */
 
-bool		redirection_done = false;	/* stderr redirected for syslogger? */
+session_local bool		redirection_done = false;	/* stderr redirected for syslogger? */
 
 /* received START_AUTOVAC_LAUNCHER signal */
-static volatile sig_atomic_t start_autovac_launcher = false;
+static session_local volatile sig_atomic_t start_autovac_launcher = false;
 
 /* the launcher needs to be signalled to communicate some condition */
-static volatile bool avlauncher_needs_signal = false;
+static session_local volatile bool avlauncher_needs_signal = false;
 
 /* received START_WALRECEIVER signal */
-static volatile sig_atomic_t WalReceiverRequested = false;
+static session_local volatile sig_atomic_t WalReceiverRequested = false;
 
 /* set when there's a worker that needs to be started up */
-static volatile bool StartWorkerNeeded = true;
-static volatile bool HaveCrashedWorker = false;
+static session_local volatile bool StartWorkerNeeded = true;
+static session_local volatile bool HaveCrashedWorker = false;
 
 #ifndef HAVE_STRONG_RANDOM
 /*
@@ -371,17 +372,17 @@ static volatile bool HaveCrashedWorker = false;
  * Also, the global MyCancelKey passes the cancel key assigned to a given
  * backend from the postmaster to that backend (via fork).
  */
-static unsigned int random_seed = 0;
-static struct timeval random_start_time;
+static session_local unsigned int random_seed = 0;
+static session_local struct timeval random_start_time;
 #endif
 
 #ifdef USE_SSL
 /* Set when and if SSL has been initialized properly */
-static bool LoadedSSL = false;
+static session_local bool LoadedSSL = false;
 #endif
 
 #ifdef USE_BONJOUR
-static DNSServiceRef bonjour_sdref = NULL;
+static session_local DNSServiceRef bonjour_sdref = NULL;
 #endif
 
 /*
@@ -561,10 +562,10 @@ static void ShmemBackendArrayRemove(Backend *bn);
  * File descriptors for pipe used to monitor if postmaster is alive.
  * First is POSTMASTER_FD_WATCH, second is POSTMASTER_FD_OWN.
  */
-int			postmaster_alive_fds[2] = {-1, -1};
+session_local int			postmaster_alive_fds[2] = {-1, -1};
 #else
 /* Process handle of postmaster used for the same purpose on Windows */
-HANDLE		PostmasterHandle;
+session_local HANDLE		PostmasterHandle;
 #endif
 
 /*
@@ -5256,7 +5257,7 @@ RandomCancelKey(int32 *cancel_key)
 	 * We cannot use pg_backend_random() in postmaster, because it stores its
 	 * state in shared memory.
 	 */
-	static unsigned short seed[3];
+	static session_local unsigned short seed[3];
 
 	/*
 	 * Select a random seed at the time of first receiving a request.

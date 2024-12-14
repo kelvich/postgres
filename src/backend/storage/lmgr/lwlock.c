@@ -111,8 +111,8 @@ extern slock_t *ShmemLock;
  * This is indexed by tranche ID and stores the names of all tranches known
  * to the current backend.
  */
-static const char **LWLockTrancheArray = NULL;
-static int	LWLockTranchesAllocated = 0;
+static session_local const char **LWLockTrancheArray = NULL;
+static session_local int	LWLockTranchesAllocated = 0;
 
 #define T_NAME(lock) \
 	(LWLockTrancheArray[(lock)->tranche])
@@ -139,8 +139,8 @@ typedef struct LWLockHandle
 	LWLockMode	mode;
 } LWLockHandle;
 
-static int	num_held_lwlocks = 0;
-static LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
+static session_local int	num_held_lwlocks = 0;
+static session_local LWLockHandle held_lwlocks[MAX_SIMUL_LWLOCKS];
 
 /* struct representing the LWLock tranche request for named tranche */
 typedef struct NamedLWLockTrancheRequest
@@ -238,8 +238,8 @@ static void
 init_lwlock_stats(void)
 {
 	HASHCTL		ctl;
-	static MemoryContext lwlock_stats_cxt = NULL;
-	static bool exit_registered = false;
+	static session_local MemoryContext lwlock_stats_cxt = NULL;
+	static session_local bool exit_registered = false;
 
 	if (lwlock_stats_cxt != NULL)
 		MemoryContextDelete(lwlock_stats_cxt);

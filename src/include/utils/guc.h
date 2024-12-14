@@ -231,46 +231,46 @@ typedef enum
 
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
-extern bool log_duration;
-extern bool Debug_print_plan;
-extern bool Debug_print_parse;
-extern bool Debug_print_rewritten;
-extern bool Debug_pretty_print;
+extern session_local bool log_duration;
+extern session_local bool Debug_print_plan;
+extern session_local bool Debug_print_parse;
+extern session_local bool Debug_print_rewritten;
+extern session_local bool Debug_pretty_print;
 
-extern bool log_parser_stats;
-extern bool log_planner_stats;
-extern bool log_executor_stats;
-extern bool log_statement_stats;
-extern bool log_btree_build_stats;
+extern session_local bool log_parser_stats;
+extern session_local bool log_planner_stats;
+extern session_local bool log_executor_stats;
+extern session_local bool log_statement_stats;
+extern session_local bool log_btree_build_stats;
 
-extern PGDLLIMPORT bool check_function_bodies;
-extern bool default_with_oids;
-extern bool	session_auth_is_superuser;
+extern session_local PGDLLIMPORT bool check_function_bodies;
+extern session_local bool default_with_oids;
+extern session_local bool	session_auth_is_superuser;
 
-extern int	log_min_error_statement;
-extern int	log_min_messages;
-extern int	client_min_messages;
-extern int	log_min_duration_statement;
-extern int	log_temp_files;
+extern session_local int	log_min_error_statement;
+extern session_local int	log_min_messages;
+extern session_local int	client_min_messages;
+extern session_local int	log_min_duration_statement;
+extern session_local int	log_temp_files;
 
-extern int	temp_file_limit;
+extern session_local int	temp_file_limit;
 
-extern int	num_temp_buffers;
+extern session_local int	num_temp_buffers;
 
-extern char *cluster_name;
-extern char *ConfigFileName;
-extern char *HbaFileName;
-extern char *IdentFileName;
-extern char *external_pid_file;
+extern session_local char *cluster_name;
+extern session_local char *ConfigFileName;
+extern session_local char *HbaFileName;
+extern session_local char *IdentFileName;
+extern session_local char *external_pid_file;
 
-extern char *application_name;
+extern session_local char *application_name;
 
-extern int	tcp_keepalives_idle;
-extern int	tcp_keepalives_interval;
-extern int	tcp_keepalives_count;
+extern session_local int	tcp_keepalives_idle;
+extern session_local int	tcp_keepalives_interval;
+extern session_local int	tcp_keepalives_count;
 
 #ifdef TRACE_SORT
-extern bool trace_sort;
+extern session_local bool trace_sort;
 #endif
 
 /*
@@ -396,9 +396,9 @@ extern void RestoreGUCState(void *gucstate);
 
 /* Support for messages reported from GUC check hooks */
 
-extern PGDLLIMPORT char *GUC_check_errmsg_string;
-extern PGDLLIMPORT char *GUC_check_errdetail_string;
-extern PGDLLIMPORT char *GUC_check_errhint_string;
+extern session_local PGDLLIMPORT char *GUC_check_errmsg_string;
+extern session_local PGDLLIMPORT char *GUC_check_errdetail_string;
+extern session_local PGDLLIMPORT char *GUC_check_errhint_string;
 
 extern void GUC_check_errcode(int sqlerrcode);
 

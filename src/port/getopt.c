@@ -31,8 +31,8 @@
  */
 
 #include "c.h"
-
 #include "pg_getopt.h"
+
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
@@ -40,19 +40,15 @@ static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 
 
 /*
- * On some versions of Solaris, opterr and friends are defined in core libc
+ * On some versions of Solaris, pg_opterr and friends are defined in core libc
  * rather than in a separate getopt module.  Define these variables only
  * if configure found they aren't there by default.  (We assume that testing
- * opterr is sufficient for all of these.)
+ * pg_opterr is sufficient for all of these.)
  */
-#ifndef HAVE_INT_OPTERR
-
-int			opterr = 1,			/* if error message should be printed */
-			optind = 1,			/* index into parent argv vector */
-			optopt;				/* character checked for validity */
-char	   *optarg;				/* argument associated with option */
-
-#endif
+session_local int			pg_opterr = 1,			/* if error message should be printed */
+			pg_optind = 1,			/* index into parent argv vector */
+			pg_optopt;				/* character checked for validity */
+session_local char	   *pg_optarg;				/* argument associated with option */
 
 #define BADCH	(int)'?'
 #define BADARG	(int)':'

@@ -360,9 +360,9 @@ static SERIALIZABLEXACT *OldCommittedSxact;
  * attempt to degrade performance (mostly as false positive serialization
  * failure) gracefully in the face of memory pressurel
  */
-int			max_predicate_locks_per_xact;	/* set by guc.c */
-int			max_predicate_locks_per_relation;	/* set by guc.c */
-int			max_predicate_locks_per_page;	/* set by guc.c */
+session_local int			max_predicate_locks_per_xact;	/* set by guc.c */
+session_local int			max_predicate_locks_per_relation;	/* set by guc.c */
+session_local int			max_predicate_locks_per_page;	/* set by guc.c */
 
 /*
  * This provides a list of objects in order to track transactions
@@ -403,15 +403,15 @@ static LWLock *ScratchPartitionLock;
  * The local hash table used to determine when to combine multiple fine-
  * grained locks into a single courser-grained lock.
  */
-static HTAB *LocalPredicateLockHash = NULL;
+static session_local HTAB *LocalPredicateLockHash = NULL;
 
 /*
  * Keep a pointer to the currently-running serializable transaction (if any)
  * for quick reference. Also, remember if we have written anything that could
  * cause a rw-conflict.
  */
-static SERIALIZABLEXACT *MySerializableXact = InvalidSerializableXact;
-static bool MyXactDidWrite = false;
+static session_local SERIALIZABLEXACT *MySerializableXact = InvalidSerializableXact;
+static session_local bool MyXactDidWrite = false;
 
 /* local functions */
 

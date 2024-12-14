@@ -165,7 +165,7 @@ static const datetkn datetktbl[] = {
 	{YESTERDAY, RESERV, DTK_YESTERDAY}	/* yesterday midnight */
 };
 
-static int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
+static const int	szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 /*
  * deltatktbl: same format as datetktbl, but holds keywords used to represent
@@ -238,17 +238,17 @@ static const datetkn deltatktbl[] = {
 	{"yrs", UNITS, DTK_YEAR}	/* "years" relative */
 };
 
-static int	szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
+static const int	szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
 
-static TimeZoneAbbrevTable *zoneabbrevtbl = NULL;
+static session_local TimeZoneAbbrevTable *zoneabbrevtbl = NULL;
 
 /* Caches of recent lookup results in the above tables */
 
-static const datetkn *datecache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *datecache[MAXDATEFIELDS] = {NULL};
 
-static const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *deltacache[MAXDATEFIELDS] = {NULL};
 
-static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
+static session_local const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
 
 
 /*

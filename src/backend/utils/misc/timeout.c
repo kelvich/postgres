@@ -40,15 +40,16 @@ typedef struct timeout_params
 /*
  * List of possible timeout reasons in the order of enum TimeoutId.
  */
-static timeout_params all_timeouts[MAX_TIMEOUTS];
-static bool all_timeouts_initialized = false;
+static session_local timeout_params all_timeouts[MAX_TIMEOUTS];
+static session_local bool all_timeouts_initialized = false;
+static session_local timer_t timer_id;
 
 /*
  * List of active timeouts ordered by their fin_time and priority.
  * This list is subject to change by the interrupt handler, so it's volatile.
  */
-static volatile int num_active_timeouts = 0;
-static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
+static session_local volatile int num_active_timeouts = 0;
+static session_local timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
 
 /*
  * Flag controlling whether the signal handler is allowed to do anything.
@@ -59,7 +60,7 @@ static timeout_params *volatile active_timeouts[MAX_TIMEOUTS];
  * since the probability of the interrupt actually occurring while we have
  * it disabled is low.  See comments in schedule_alarm() about that.
  */
-static volatile sig_atomic_t alarm_enabled = false;
+static session_local volatile sig_atomic_t alarm_enabled = false;
 
 #define disable_alarm() (alarm_enabled = false)
 #define enable_alarm()	(alarm_enabled = true)

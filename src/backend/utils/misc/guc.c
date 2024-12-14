@@ -110,27 +110,27 @@
 #define REALTYPE_PRECISION 17
 
 /* XXX these should appear in other modules' header files */
-extern bool Log_disconnections;
-extern int	CommitDelay;
-extern int	CommitSiblings;
-extern char *default_tablespace;
-extern char *temp_tablespaces;
-extern bool ignore_checksum_failure;
-extern bool synchronize_seqscans;
+extern session_local bool Log_disconnections;
+extern session_local int	CommitDelay;
+extern session_local int	CommitSiblings;
+extern session_local char *default_tablespace;
+extern session_local char *temp_tablespaces;
+extern session_local bool ignore_checksum_failure;
+extern session_local bool synchronize_seqscans;
 
 #ifdef TRACE_SYNCSCAN
-extern bool trace_syncscan;
+extern session_local bool trace_syncscan;
 #endif
 #ifdef DEBUG_BOUNDED_SORT
-extern bool optimize_bounded_sort;
+extern session_local bool optimize_bounded_sort;
 #endif
 
-static int	GUC_check_errcode_value;
+static session_local int	GUC_check_errcode_value;
 
 /* global variables for check hook support */
-char	   *GUC_check_errmsg_string;
-char	   *GUC_check_errdetail_string;
-char	   *GUC_check_errhint_string;
+session_local char	   *GUC_check_errmsg_string;
+session_local char	   *GUC_check_errdetail_string;
+session_local char	   *GUC_check_errhint_string;
 
 static void do_serialize(char **destptr, Size *maxbytes, const char *fmt,...) pg_attribute_printf(3, 4);
 
@@ -155,9 +155,9 @@ static bool check_wal_consistency_checking(char **newval, void **extra,
 static void assign_wal_consistency_checking(const char *newval, void *extra);
 
 #ifdef HAVE_SYSLOG
-static int	syslog_facility = LOG_LOCAL0;
+static session_local int	syslog_facility = LOG_LOCAL0;
 #else
-static int	syslog_facility = 0;
+static session_local int	syslog_facility = 0;
 #endif
 
 static void assign_syslog_facility(int newval, void *extra);
@@ -429,49 +429,49 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
 /*
  * GUC option variables that are exported from this module
  */
-bool		log_duration = false;
-bool		Debug_print_plan = false;
-bool		Debug_print_parse = false;
-bool		Debug_print_rewritten = false;
-bool		Debug_pretty_print = true;
+session_local bool		log_duration = false;
+session_local bool		Debug_print_plan = false;
+session_local bool		Debug_print_parse = false;
+session_local bool		Debug_print_rewritten = false;
+session_local bool		Debug_pretty_print = true;
 
-bool		log_parser_stats = false;
-bool		log_planner_stats = false;
-bool		log_executor_stats = false;
-bool		log_statement_stats = false;	/* this is sort of all three above
+session_local bool		log_parser_stats = false;
+session_local bool		log_planner_stats = false;
+session_local bool		log_executor_stats = false;
+session_local bool		log_statement_stats = false;	/* this is sort of all three above
 											 * together */
-bool		log_btree_build_stats = false;
-char	   *event_source;
+session_local bool		log_btree_build_stats = false;
+session_local char	   *event_source;
 
-bool		row_security;
-bool		check_function_bodies = true;
-bool		default_with_oids = false;
-bool		session_auth_is_superuser;
+session_local bool		row_security;
+session_local bool		check_function_bodies = true;
+session_local bool		default_with_oids = false;
+session_local bool		session_auth_is_superuser;
 
-int			log_min_error_statement = ERROR;
-int			log_min_messages = WARNING;
-int			client_min_messages = NOTICE;
-int			log_min_duration_statement = -1;
-int			log_temp_files = -1;
-int			trace_recovery_messages = LOG;
+session_local int			log_min_error_statement = ERROR;
+session_local int			log_min_messages = WARNING;
+session_local int			client_min_messages = NOTICE;
+session_local int			log_min_duration_statement = -1;
+session_local int			log_temp_files = -1;
+session_local int			trace_recovery_messages = LOG;
 
-int			temp_file_limit = -1;
+session_local int			temp_file_limit = -1;
 
-int			num_temp_buffers = 1024;
+session_local int			num_temp_buffers = 1024;
 
-char	   *cluster_name = "";
-char	   *ConfigFileName;
-char	   *HbaFileName;
-char	   *IdentFileName;
-char	   *external_pid_file;
+session_local char	   *cluster_name = "";
+session_local char	   *ConfigFileName;
+session_local char	   *HbaFileName;
+session_local char	   *IdentFileName;
+session_local char	   *external_pid_file;
 
-char	   *pgstat_temp_directory;
+session_local char	   *pgstat_temp_directory;
 
-char	   *application_name;
+session_local char	   *application_name;
 
-int			tcp_keepalives_idle;
-int			tcp_keepalives_interval;
-int			tcp_keepalives_count;
+session_local int			tcp_keepalives_idle;
+session_local int			tcp_keepalives_interval;
+session_local int			tcp_keepalives_count;
 
 /*
  * SSL renegotiation was been removed in PostgreSQL 9.5, but we tolerate it
@@ -479,46 +479,46 @@ int			tcp_keepalives_count;
  * This avoids breaking compatibility with clients that have never supported
  * renegotiation and therefore always try to zero it.
  */
-int			ssl_renegotiation_limit;
+session_local int			ssl_renegotiation_limit;
 
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
  */
-int			huge_pages;
+session_local int			huge_pages;
 
 /*
  * These variables are all dummies that don't do anything, except in some
  * cases provide the value for SHOW to display.  The real state is elsewhere
  * and is kept in sync by assign_hooks.
  */
-static char *syslog_ident_str;
-static double phony_random_seed;
-static char *client_encoding_string;
-static char *datestyle_string;
-static char *locale_collate;
-static char *locale_ctype;
-static char *server_encoding_string;
-static char *server_version_string;
-static int	server_version_num;
-static char *timezone_string;
-static char *log_timezone_string;
-static char *timezone_abbreviations_string;
-static char *XactIsoLevel_string;
-static char *data_directory;
-static char *session_authorization_string;
-static int	max_function_args;
-static int	max_index_keys;
-static int	max_identifier_length;
-static int	block_size;
-static int	segment_size;
-static int	wal_block_size;
-static bool data_checksums;
-static bool integer_datetimes;
-static bool assert_enabled;
+static session_local char *syslog_ident_str;
+static session_local double phony_random_seed;
+static session_local char *client_encoding_string;
+static session_local char *datestyle_string;
+static session_local char *locale_collate;
+static session_local char *locale_ctype;
+static session_local char *server_encoding_string;
+static session_local char *server_version_string;
+static session_local int	server_version_num;
+static session_local char *timezone_string;
+static session_local char *log_timezone_string;
+static session_local char *timezone_abbreviations_string;
+static session_local char *XactIsoLevel_string;
+static session_local char *data_directory;
+static session_local char *session_authorization_string;
+static session_local int	max_function_args;
+static session_local int	max_index_keys;
+static session_local int	max_identifier_length;
+static session_local int	block_size;
+static session_local int	segment_size;
+static session_local int	wal_block_size;
+static session_local bool data_checksums;
+static session_local bool integer_datetimes;
+static session_local bool assert_enabled;
 
 /* should be static, but commands/variable.c needs to get at this */
-char	   *role_string;
+session_local char	   *role_string;
 
 
 /*
@@ -3951,20 +3951,20 @@ static const char *const map_old_guc_names[] = {
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
+static session_local struct config_generic **guc_variables;
 
 /* Current number of variables contained in the vector */
-static int	num_guc_variables;
+static session_local int	num_guc_variables;
 
 /* Vector capacity */
-static int	size_guc_variables;
+static session_local int	size_guc_variables;
 
 
-static bool guc_dirty;			/* true if need to do commit/abort work */
+static session_local bool guc_dirty;			/* true if need to do commit/abort work */
 
-static bool reporting_enabled;	/* true to enable GUC_REPORT */
+static session_local bool reporting_enabled;	/* true to enable GUC_REPORT */
 
-static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+static session_local int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
 
 static int	guc_var_compare(const void *a, const void *b);
@@ -6715,7 +6715,7 @@ const char *
 GetConfigOption(const char *name, bool missing_ok, bool restrict_superuser)
 {
 	struct config_generic *record;
-	static char buffer[256];
+	static session_local char buffer[256];
 
 	record = find_option(name, false, ERROR);
 	if (record == NULL)
@@ -6771,7 +6771,7 @@ const char *
 GetConfigOptionResetString(const char *name)
 {
 	struct config_generic *record;
-	static char buffer[256];
+	static session_local char buffer[256];
 
 	record = find_option(name, false, ERROR);
 	if (record == NULL)
@@ -10311,7 +10311,7 @@ static const char *
 show_tcp_keepalives_idle(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesidle(MyProcPort));
 	return nbuf;
@@ -10328,7 +10328,7 @@ static const char *
 show_tcp_keepalives_interval(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesinterval(MyProcPort));
 	return nbuf;
@@ -10345,7 +10345,7 @@ static const char *
 show_tcp_keepalives_count(void)
 {
 	/* See comments in assign_tcp_keepalives_idle */
-	static char nbuf[16];
+	static session_local char nbuf[16];
 
 	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivescount(MyProcPort));
 	return nbuf;
@@ -10498,7 +10498,7 @@ check_cluster_name(char **newval, void **extra, GucSource source)
 static const char *
 show_unix_socket_permissions(void)
 {
-	static char buf[8];
+	static session_local char buf[8];
 
 	snprintf(buf, sizeof(buf), "%04o", Unix_socket_permissions);
 	return buf;
@@ -10507,7 +10507,7 @@ show_unix_socket_permissions(void)
 static const char *
 show_log_file_mode(void)
 {
-	static char buf[8];
+	static session_local char buf[8];
 
 	snprintf(buf, sizeof(buf), "%04o", Log_file_mode);
 	return buf;
