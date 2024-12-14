@@ -76,6 +76,7 @@
 #include <sys/param.h>
 #include <netdb.h>
 #include <limits.h>
+#include <pthread.h>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -166,7 +167,7 @@
  */
 typedef struct bkend
 {
-	pid_t		pid;			/* process id of backend */
+	pthread_t	pid;			/* process id of backend */
 	int32		cancel_key;		/* cancel key for cancels for this backend */
 	int			child_slot;		/* PMChildSlot for this backend, if any */
 
@@ -402,11 +403,11 @@ static void sigusr1_handler(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
-static void CleanupBackend(int pid, int exitstatus);
-static bool CleanupBackgroundWorker(int pid, int exitstatus);
-static void HandleChildCrash(int pid, int exitstatus, const char *procname);
+static void CleanupBackend(pthread_t pid, thread_status_t exitstatus);
+static bool CleanupBackgroundWorker(pthread_t pid, thread_status_t exitstatus);
+static void HandleChildCrash(pthread_t pid, thread_status_t exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
-			 int pid, int exitstatus);
+			 pthread_t pid, thread_status_t exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
 static void BackendRun(Port *port) pg_attribute_noreturn();
@@ -420,7 +421,7 @@ static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(void);
 static bool RandomCancelKey(int32 *cancel_key);
-static void signal_child(pid_t pid, int signal);
+static void signal_child(pthread_t pid, int signal);
 static bool SignalSomeChildren(int signal, int targets);
 static void TerminateChildren(int signal);
 
@@ -430,7 +431,7 @@ static int	CountChildren(int target);
 static bool assign_backendlist_entry(RegisteredBgWorker *rw);
 static void maybe_start_bgworkers(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
-static pid_t StartChildProcess(AuxProcType type);
+static pthread_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
 static void MaybeStartWalReceiver(void);
 static void InitPostmasterDeathWatchHandle(void);
@@ -1214,7 +1215,7 @@ PostmasterMain(int argc, char *argv[])
 
 		if (fpidfile)
 		{
-			fprintf(fpidfile, "%d\n", MyProcPid);
+			fprintf(fpidfile, "%ld\n", MyProcPid);
 			fclose(fpidfile);
 
 			/* Make PID file world readable */
@@ -1823,7 +1824,7 @@ ServerLoop(void)
 		{
 			avlauncher_needs_signal = false;
 			if (AutoVacPID != 0)
-				kill(AutoVacPID, SIGUSR2);
+				pthread_kill(AutoVacPID, SIGUSR2);
 		}
 
 		/* If we need to start a WAL receiver, try to do that now */
@@ -3144,8 +3145,8 @@ reaper(SIGNAL_ARGS)
  * until we're sure it is.
  */
 static bool
-CleanupBackgroundWorker(int pid,
-						int exitstatus) /* child's exit status */
+CleanupBackgroundWorker(pthread_t pid,
+						thread_status_t exitstatus) /* child's exit status */
 {
 	char		namebuf[MAXPGPATH];
 	slist_mutable_iter iter;
@@ -3244,10 +3245,12 @@ CleanupBackgroundWorker(int pid,
  * If you change this, see also CleanupBackgroundWorker.
  */
 static void
-CleanupBackend(int pid,
-			   int exitstatus)	/* child's exit status. */
+CleanupBackend(pthread_t pid,
+			   thread_status_t exitstatus)	/* child's exit status. */
 {
 	dlist_mutable_iter iter;
+
+	elog(DEBUG2, "CleanupBackend %ld in thread %ld, status=%ld", pid, pthread_self(), exitstatus);
 
 	LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
@@ -3290,6 +3293,7 @@ CleanupBackend(int pid,
 			{
 				if (!ReleasePostmasterChildSlot(bp->child_slot))
 				{
+					elog(WARNING, "Child %ld failed to perform cleanup", pid);
 					/*
 					 * Uh-oh, the child failed to clean itself up.  Treat as a
 					 * crash after all.
@@ -3328,7 +3332,7 @@ CleanupBackend(int pid,
  * process, and to signal all other remaining children to quickdie.
  */
 static void
-HandleChildCrash(int pid, int exitstatus, const char *procname)
+HandleChildCrash(pthread_t pid, thread_status_t exitstatus, const char *procname)
 {
 	dlist_mutable_iter iter;
 	slist_iter	siter;
@@ -3521,9 +3525,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	else if (AutoVacPID != 0 && take_action)
 	{
 		ereport(DEBUG2,
-				(errmsg_internal("sending %s to process %d",
+				(errmsg_internal("sending %s to process %ld",
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-								 (int) AutoVacPID)));
+								 AutoVacPID)));
 		signal_child(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
@@ -3551,9 +3555,9 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	if (PgStatPID != 0 && take_action)
 	{
 		ereport(DEBUG2,
-				(errmsg_internal("sending %s to process %d",
+				(errmsg_internal("sending %s to process %ld",
 								 "SIGQUIT",
-								 (int) PgStatPID)));
+								 PgStatPID)));
 		signal_child(PgStatPID, SIGQUIT);
 		allow_immediate_pgstat_restart();
 	}
@@ -3584,7 +3588,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
  * Log the death of a child process.
  */
 static void
-LogChildExit(int lev, const char *procname, int pid, int exitstatus)
+LogChildExit(int lev, const char *procname, pthread_t pid, thread_status_t exitstatus)
 {
 	/*
 	 * size of activity_buffer is arbitrary, but set equal to default
@@ -3604,8 +3608,8 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) exited with exit code %d",
-						procname, pid, WEXITSTATUS(exitstatus)),
+				(errmsg("%s (PID %ld) exited with exit code %ld",
+						procname, pid, exitstatus),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 	else if (WIFSIGNALED(exitstatus))
 #if defined(WIN32)
@@ -3624,8 +3628,8 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal %d: %s",
-						procname, pid, WTERMSIG(exitstatus),
+				(errmsg("%s (PID %ld) was terminated by signal %ld: %s",
+						procname, pid, exitstatus,
 						WTERMSIG(exitstatus) < NSIG ?
 						sys_siglist[WTERMSIG(exitstatus)] : "(unknown)"),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
@@ -3635,8 +3639,8 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal %d",
-						procname, pid, WTERMSIG(exitstatus)),
+				(errmsg("%s (PID %ld) was terminated by signal %ld",
+						procname, pid, exitstatus),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #endif
 	else
@@ -3645,7 +3649,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) exited with unrecognized status %d",
+				(errmsg("%s (PID %ld) exited with unrecognized status %ld",
 						procname, pid, exitstatus),
 				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 }
@@ -3911,9 +3915,9 @@ PostmasterStateMachine(void)
  * child twice will not cause any problems.
  */
 static void
-signal_child(pid_t pid, int signal)
+signal_child(pthread_t pid, int signal)
 {
-	if (kill(pid, signal) < 0)
+	if (pthread_kill(pid, signal) < 0)
 		elog(DEBUG3, "kill(%ld,%d) failed: %m", (long) pid, signal);
 #ifdef HAVE_SETSID
 	switch (signal)
@@ -4006,6 +4010,108 @@ TerminateChildren(int signal)
 		signal_child(PgStatPID, signal);
 }
 
+static ThreadContext* terminated_queue;
+static pthread_mutex_t terminated_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static ThreadContext* get_terminated_thread()
+{
+	ThreadContext* tc;
+	pthread_mutex_lock(&terminated_queue_mutex);
+	tc = terminated_queue;
+	if (tc != NULL)
+		terminated_queue = tc->next;
+	pthread_mutex_unlock(&terminated_queue_mutex);
+	return tc;
+}
+
+static void thread_cleanup(void* arg)
+{
+	ThreadContext* ctx = (ThreadContext*)arg;
+	int rc;
+
+	CleanupLatchSupport();
+	pq_finalize();
+
+	ReleaseTimeouts();
+
+	/* Release memory context for this thread */
+	CurrentMemoryContext = NULL;
+	MemoryContextDelete(TopMemoryContext);
+
+	pthread_mutex_lock(&terminated_queue_mutex);
+	ctx->next = terminated_queue;
+	terminated_queue = ctx;
+	pthread_mutex_unlock(&terminated_queue_mutex);
+	elog(DEBUG1, "Thread %ld is terminated", ctx->tid);
+	Assert(PostmasterPid != 0);
+	rc = pthread_kill(PostmasterPid, SIGUSR1);
+	if (rc != 0)
+		elog(WARNING, "Failed to notify poastmaster %ld about backend termination: %d", PostmasterPid, rc);
+	elog(DEBUG2, "Notify poastmaster %ld about backend termination: %d", PostmasterPid, rc);
+}
+
+static void* thread_trampoline(void* arg)
+{
+	ThreadContext* ctx = (ThreadContext*)arg;
+	void* result;
+
+	pthread_cleanup_push(thread_cleanup, ctx);
+
+	IsPostmasterEnvironment = true;
+	PostmasterContext = NULL;
+
+	/*
+	 * Fire up essential subsystems: error and memory management
+	 *
+	 * Code after this point is allowed to use elog/ereport, though
+	 * localization of messages may not work right away, and messages won't go
+	 * anywhere but stderr until GUC settings get loaded.
+	 */
+	MemoryContextInit();
+	MemoryContextSwitchTo(TopMemoryContext);
+
+	restore_backend_variables(ctx);
+
+	InitializeGUCOptions();
+
+	/* Detangle from postmaster */
+	InitPostmasterChild();
+
+	/*
+	 * Set reference point for stack-depth checking
+	 */
+	set_stack_base();
+
+	result = ctx->thread_proc(ctx);
+	pthread_cleanup_pop(1);
+
+	return result;
+}
+
+
+bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port)
+{
+	pthread_attr_t attr;
+	int rc;
+	ThreadContext* ctx = (ThreadContext*)malloc(sizeof(ThreadContext));
+	save_backend_variables(ctx);
+	if (port != NULL) {
+		memcpy(&ctx->port, port, sizeof(Port));
+	} else {
+		ctx->port.sock = PGINVALID_SOCKET;
+	}
+	ctx->thread_proc = thread_proc;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, (size_t)thread_stack_size*1024);
+	rc = pthread_create(&ctx->tid, &attr, thread_trampoline, ctx);
+	if (rc != 0) elog(WARNING, "pthread_create failed with code %d, errno=%d, thread_stack_size=%d", rc, errno, thread_stack_size);
+	*t = ctx->tid;
+	pthread_attr_destroy(&attr);
+	return rc == 0;
+}
+
+
+
 /*
  * BackendStartup -- start backend process
  *
@@ -4013,11 +4119,21 @@ TerminateChildren(int signal)
  *
  * Note: if you change this code, also consider StartAutovacuumWorker.
  */
+static void* backend_main_proc(void* arg)
+{
+	ThreadContext* ctx = (ThreadContext*)arg;
+	/* Perform additional initialization and collect startup packet */
+	BackendInitialize(&ctx->port);
+
+	/* And run the backend */
+	BackendRun(&ctx->port);
+	return NULL;
+}
+
 static int
 BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
-	pid_t		pid;
 
 	/*
 	 * Create backend data structure.  Better before the fork() so we can
@@ -4064,29 +4180,7 @@ BackendStartup(Port *port)
 	/* Hasn't asked to be notified about any bgworkers yet */
 	bn->bgworker_notify = false;
 
-#ifdef EXEC_BACKEND
-	pid = backend_forkexec(port);
-#else							/* !EXEC_BACKEND */
-	pid = fork_process();
-	if (pid == 0)				/* child */
-	{
-		free(bn);
-
-		/* Detangle from postmaster */
-		InitPostmasterChild();
-
-		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(false);
-
-		/* Perform additional initialization and collect startup packet */
-		BackendInitialize(port);
-
-		/* And run the backend */
-		BackendRun(port);
-	}
-#endif							/* EXEC_BACKEND */
-
-	if (pid < 0)
+    if (!create_thread(&bn->pid, backend_main_proc, port))
 	{
 		/* in parent, fork failed */
 		int			save_errno = errno;
@@ -4104,13 +4198,12 @@ BackendStartup(Port *port)
 	/* in parent, successful fork */
 	ereport(DEBUG2,
 			(errmsg_internal("forked new backend, pid=%d socket=%d",
-							 (int) pid, (int) port->sock)));
+							 (int) bn->pid, (int) port->sock)));
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our list
 	 * of backends.
 	 */
-	bn->pid = pid;
 	bn->bkend_type = BACKEND_TYPE_NORMAL;	/* Can change later to WALSND */
 	dlist_push_head(&BackendList, &bn->elem);
 
@@ -4428,7 +4521,7 @@ BackendRun(Port *port)
  * All uses of this routine will dispatch to SubPostmasterMain in the
  * child process.
  */
-pid_t
+pthread_t
 postmaster_forkexec(int argc, char *argv[])
 {
 	Port		port;
@@ -4447,7 +4540,7 @@ postmaster_forkexec(int argc, char *argv[])
  *
  * returns the pid of the fork/exec'd process, or -1 on failure
  */
-static pid_t
+static pthread_t
 backend_forkexec(Port *port)
 {
 	char	   *av[4];
@@ -5644,7 +5737,7 @@ BackgroundWorkerUnblockSignals(void)
 }
 
 #ifdef EXEC_BACKEND
-static pid_t
+static pthread_t
 bgworker_forkexec(int shmem_slot)
 {
 	char	   *av[10];
@@ -5673,10 +5766,17 @@ bgworker_forkexec(int shmem_slot)
  *
  * This code is heavily based on autovacuum.c, q.v.
  */
+static void* worker_main_proc(void* arg)
+{
+	StartBackgroundWorker();
+	return NULL;
+}
+
+
 static bool
 do_start_bgworker(RegisteredBgWorker *rw)
 {
-	pid_t		worker_pid;
+	pthread_t		worker_pid;
 
 	Assert(rw->rw_pid == 0);
 
@@ -5970,7 +6070,7 @@ maybe_start_bgworkers(void)
  * to know when such backends exit.
  */
 bool
-PostmasterMarkPIDForWorkerNotify(int pid)
+PostmasterMarkPIDForWorkerNotify(pthread_t pid)
 {
 	dlist_iter	iter;
 	Backend    *bp;

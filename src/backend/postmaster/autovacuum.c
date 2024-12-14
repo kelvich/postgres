@@ -283,7 +283,7 @@ typedef struct AutoVacuumWorkItem
 typedef struct
 {
 	sig_atomic_t av_signal[AutoVacNumSignals];
-	pid_t		av_launcherpid;
+	pthread_t		av_launcherpid;
 	dlist_head	av_freeWorkers;
 	dlist_head	av_runningWorkers;
 	WorkerInfo	av_startingWorker;
@@ -361,7 +361,7 @@ static void autovac_refresh_stats(void);
  *
  * Format up the arglist, then fork and exec.
  */
-static pid_t
+static pthread_t
 avlauncher_forkexec(void)
 {
 	char	   *av[10];
@@ -387,43 +387,28 @@ AutovacuumLauncherIAm(void)
 }
 #endif
 
+static void* autovacuum_main_proc(void* arg)
+{
+	AutoVacLauncherMain(0, NULL);
+	return NULL;
+}
+
 /*
  * Main entry point for autovacuum launcher process, to be called from the
  * postmaster.
  */
-int
+pthread_t
 StartAutoVacLauncher(void)
 {
-	pid_t		AutoVacPID;
+	pthread_t		AutoVacPID;
 
-#ifdef EXEC_BACKEND
-	switch ((AutoVacPID = avlauncher_forkexec()))
-#else
-	switch ((AutoVacPID = fork_process()))
-#endif
-	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork autovacuum launcher process: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			AutoVacLauncherMain(0, NULL);
-			break;
-#endif
-		default:
-			return (int) AutoVacPID;
+	if (!create_thread(&AutoVacPID, autovacuum_main_proc, NULL)) {
+		ereport(LOG,
+				(errmsg("could not fork autovacuum launcher process: %m")));
+		return 0;
+	} else  {
+		return AutoVacPID;
 	}
-
-	/* shouldn't get here */
-	return 0;
 }
 
 /*
@@ -1436,76 +1421,28 @@ avl_sigterm_handler(SIGNAL_ARGS)
  *					  AUTOVACUUM WORKER CODE
  ********************************************************************/
 
-#ifdef EXEC_BACKEND
-/*
- * forkexec routines for the autovacuum worker.
- *
- * Format up the arglist, then fork and exec.
- */
-static pid_t
-avworker_forkexec(void)
+static void* autovac_worker_main_proc(void* arg)
 {
-	char	   *av[10];
-	int			ac = 0;
-
-	av[ac++] = "postgres";
-	av[ac++] = "--forkavworker";
-	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
-	av[ac] = NULL;
-
-	Assert(ac < lengthof(av));
-
-	return postmaster_forkexec(ac, av);
+	AutoVacWorkerMain(0, NULL);
+	return NULL;
 }
-
-/*
- * We need this set from the outside, before InitProcess is called
- */
-void
-AutovacuumWorkerIAm(void)
-{
-	am_autovacuum_worker = true;
-}
-#endif
 
 /*
  * Main entry point for autovacuum worker process.
  *
  * This code is heavily based on pgarch.c, q.v.
  */
-int
+pthread_t 
 StartAutoVacWorker(void)
 {
-	pid_t		worker_pid;
+	pthread_t		worker_pid = 0;
 
-#ifdef EXEC_BACKEND
-	switch ((worker_pid = avworker_forkexec()))
-#else
-	switch ((worker_pid = fork_process()))
-#endif
+	if (!create_thread(&worker_pid, autovac_worker_main_proc, NULL))
 	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork autovacuum worker process: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			AutoVacWorkerMain(0, NULL);
-			break;
-#endif
-		default:
-			return (int) worker_pid;
+		ereport(LOG,
+				(errmsg("could not fork autovacuum worker process: %m")));
 	}
-
-	/* shouldn't get here */
-	return 0;
+	return worker_pid;
 }
 
 /*
@@ -1650,7 +1587,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 		/* wake up the launcher */
 		if (AutoVacuumShmem->av_launcherpid != 0)
-			kill(AutoVacuumShmem->av_launcherpid, SIGUSR2);
+			pthread_kill(AutoVacuumShmem->av_launcherpid, SIGUSR2);
 	}
 	else
 	{

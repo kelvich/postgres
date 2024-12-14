@@ -18,6 +18,7 @@
  */
 #include "postgres.h"
 
+#include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/param.h>
@@ -695,7 +696,7 @@ pgstat_reset_all(void)
  *
  * Format up the arglist for, then fork and exec, statistics collector process
  */
-static pid_t
+static pthread_t
 pgstat_forkexec(void)
 {
 	char	   *av[10];
@@ -712,6 +713,11 @@ pgstat_forkexec(void)
 }
 #endif							/* EXEC_BACKEND */
 
+static void* pgstat_main_proc(void* arg)
+{
+	PgstatCollectorMain(0, NULL);
+	return NULL;
+}
 
 /*
  * pgstat_start() -
@@ -723,11 +729,11 @@ pgstat_forkexec(void)
  *
  *	Note: if fail, we will be called again from the postmaster main loop.
  */
-int
+pthread_t
 pgstat_start(void)
 {
 	time_t		curtime;
-	pid_t		pgStatPid;
+	pthread_t		pgStatPid;
 
 	/*
 	 * Check that the socket is there, else pgstat_init failed and we can do
@@ -751,39 +757,16 @@ pgstat_start(void)
 	/*
 	 * Okay, fork off the collector.
 	 */
-#ifdef EXEC_BACKEND
-	switch ((pgStatPid = pgstat_forkexec()))
-#else
-	switch ((pgStatPid = fork_process()))
-#endif
+	if (!create_thread(&pgStatPid, pgstat_main_proc, NULL))
 	{
-		case -1:
-			ereport(LOG,
-					(errmsg("could not fork statistics collector: %m")));
-			return 0;
-
-#ifndef EXEC_BACKEND
-		case 0:
-			/* in postmaster child ... */
-			InitPostmasterChild();
-
-			/* Close the postmaster's sockets */
-			ClosePostmasterPorts(false);
-
-			/* Drop our connection to postmaster's shared memory, as well */
-			dsm_detach_all();
-			PGSharedMemoryDetach();
-
-			PgstatCollectorMain(0, NULL);
-			break;
-#endif
-
-		default:
-			return (int) pgStatPid;
+		ereport(LOG,
+				(errmsg("could not fork statistics collector: %m")));
+		return 0;
 	}
-
-	/* shouldn't get here */
-	return 0;
+	else
+	{
+		return pgStatPid;
+	}
 }
 
 void
@@ -4443,7 +4426,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 */
 	pgstat_write_statsfiles(true, true);
 
-	exit(0);
+	pthread_exit(0);
 }
 
 

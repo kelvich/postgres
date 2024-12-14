@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <pthread.h>
 
 #include "miscadmin.h"
 #ifdef PROFILE_PID_DIR
@@ -140,7 +141,7 @@ proc_exit(int code)
 
 	elog(DEBUG3, "exit(%d)", code);
 
-	exit(code);
+	pthread_exit((void*)(size_t)code);
 }
 
 /*

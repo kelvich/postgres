@@ -77,7 +77,7 @@ pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg)
  * message data via the shm_mq.
  */
 void
-pq_set_parallel_master(pid_t pid, BackendId backend_id)
+pq_set_parallel_master(pthread_t pid, BackendId backend_id)
 {
 	Assert(PqCommMethods == &PqCommMqMethods);
 	pq_mq_parallel_master_pid = pid;

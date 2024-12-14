@@ -53,10 +53,10 @@ extern void ClosePostmasterPorts(bool am_syslogger);
 extern int	MaxLivePostmasterChildren(void);
 
 extern int	GetNumShmemAttachedBgworkers(void);
-extern bool PostmasterMarkPIDForWorkerNotify(int);
+extern bool PostmasterMarkPIDForWorkerNotify(pthread_t);
 
 #ifdef EXEC_BACKEND
-extern pid_t postmaster_forkexec(int argc, char *argv[]);
+extern pthread_t postmaster_forkexec(int argc, char *argv[]);
 extern void SubPostmasterMain(int argc, char *argv[]) pg_attribute_noreturn();
 
 extern Size ShmemBackendArraySize(void);
@@ -74,5 +74,10 @@ extern void ShmemBackendArrayAllocation(void);
  * relevant GUC check hooks and in RegisterBackgroundWorker().
  */
 #define MAX_BACKENDS	0x3FFFF
+
+typedef void*(*thread_proc_t)(void* arg);
+
+extern bool create_thread(pthread_t* t, thread_proc_t thread_proc, void* port);
+
 
 #endif							/* _POSTMASTER_H */

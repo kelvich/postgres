@@ -35,7 +35,7 @@
 /* PID can be negative for standalone backend */
 typedef long pgpid_t;
 
-
+/* PID can be negative for standalone backend */
 typedef enum
 {
 	SMART_MODE,
@@ -860,7 +860,7 @@ static void
 do_stop(void)
 {
 	int			cnt;
-	pgpid_t		pid;
+	pid_t		pid;
 	struct stat statbuf;
 
 	pid = get_pgpid(false);
@@ -875,14 +875,14 @@ do_stop(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot stop server; "
-					   "single-user server is running (PID: %ld)\n"),
+					   "single-user server is running (PID: %d)\n"),
 					 progname, pid);
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
+		write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -964,7 +964,7 @@ do_restart(void)
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		if (postmaster_is_alive((pid_t) pid))
+		if (postmaster_is_alive(pid))
 		{
 			write_stderr(_("%s: cannot restart server; "
 						   "single-user server is running (PID: %ld)\n"),
@@ -974,9 +974,9 @@ do_restart(void)
 		}
 	}
 
-	if (postmaster_is_alive((pid_t) pid))
+	if (postmaster_is_alive(pid))
 	{
-		if (kill((pid_t) pid, sig) != 0)
+		if (kill(pid, sig) != 0)
 		{
 			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 						 strerror(errno));
@@ -1059,7 +1059,7 @@ do_reload(void)
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1126,7 +1126,7 @@ do_promote(void)
 	}
 
 	sig = SIGUSR1;
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
 					 progname, pid, strerror(errno));
@@ -1211,7 +1211,7 @@ do_status(void)
 		if (pid < 0)
 		{
 			pid = -pid;
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
 				printf(_("%s: single-user server is running (PID: %ld)\n"),
 					   progname, pid);
@@ -1221,7 +1221,7 @@ do_status(void)
 		else
 			/* must be a postmaster */
 		{
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
 				char	  **optlines;
 				char	  **curr_line;
@@ -1258,7 +1258,7 @@ do_status(void)
 static void
 do_kill(pgpid_t pid)
 {
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
 		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"),
 					 progname, sig, pid, strerror(errno));

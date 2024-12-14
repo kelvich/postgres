@@ -692,7 +692,7 @@ SysLogger_Start(void)
  *
  * Format up the arglist for, then fork and exec, a syslogger process
  */
-static pid_t
+static pthread_t 
 syslogger_forkexec(void)
 {
 	char	   *av[10];

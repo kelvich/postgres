@@ -414,7 +414,7 @@ void
 SetLatch(volatile Latch *latch)
 {
 #ifndef WIN32
-	pid_t		owner_pid;
+	pthread_t		owner_pid;
 #else
 	HANDLE		handle;
 #endif
@@ -465,7 +465,7 @@ SetLatch(volatile Latch *latch)
 			sendSelfPipeByte();
 	}
 	else
-		kill(owner_pid, SIGUSR1);
+		pthread_kill(owner_pid, SIGUSR1);
 #else
 
 	/*

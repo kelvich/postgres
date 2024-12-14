@@ -49,7 +49,7 @@
  */
 typedef struct
 {
-	pid_t		pss_pid;
+	pthread_t		pss_pid;
 	sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
 } ProcSignalSlot;
 
@@ -112,7 +112,7 @@ ProcSignalInit(int pss_idx)
 
 	/* sanity check */
 	if (slot->pss_pid != 0)
-		elog(LOG, "process %d taking over ProcSignal slot %d, but it's not empty",
+		elog(LOG, "process %ld taking over ProcSignal slot %d, but it's not empty",
 			 MyProcPid, pss_idx);
 
 	/* Clear out any leftover signal reasons */
@@ -157,7 +157,7 @@ CleanupProcSignalState(int status, Datum arg)
 		 * don't ERROR here. We're exiting anyway, and don't want to get into
 		 * infinite loop trying to exit
 		 */
-		elog(LOG, "process %d releasing ProcSignal slot %d, but it contains %d",
+		elog(LOG, "process %ld releasing ProcSignal slot %d, but it contains %d",
 			 MyProcPid, pss_idx, (int) slot->pss_pid);
 		return;					/* XXX better to zero the slot anyway? */
 	}
@@ -177,7 +177,7 @@ CleanupProcSignalState(int status, Datum arg)
  * Not to be confused with ProcSendSignal
  */
 int
-SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
+SendProcSignal(pthread_t pid, ProcSignalReason reason, BackendId backendId)
 {
 	volatile ProcSignalSlot *slot;
 
@@ -198,7 +198,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 			/* Atomically set the proper flag */
 			slot->pss_signalFlags[reason] = true;
 			/* Send signal */
-			return kill(pid, SIGUSR1);
+			return pthread_kill(pid, SIGUSR1);
 		}
 	}
 	else
@@ -222,7 +222,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 				/* Atomically set the proper flag */
 				slot->pss_signalFlags[reason] = true;
 				/* Send signal */
-				return kill(pid, SIGUSR1);
+				return pthread_kill(pid, SIGUSR1);
 			}
 		}
 	}

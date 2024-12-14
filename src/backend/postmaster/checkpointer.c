@@ -40,6 +40,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -116,7 +117,7 @@ typedef struct
 
 typedef struct
 {
-	pid_t		checkpointer_pid;	/* PID (0 if not started) */
+	pthread_t		checkpointer_pid;	/* PID (0 if not started) */
 
 	slock_t		ckpt_lck;		/* protects all the ckpt_* fields */
 
@@ -565,7 +566,7 @@ CheckpointerMain(void)
 		 * necessity for manual cleanup of all postmaster children.
 		 */
 		if (rc & WL_POSTMASTER_DEATH)
-			exit(1);
+			pthread_exit((void*)1);
 	}
 }
 
@@ -843,7 +844,7 @@ chkpt_quickdie(SIGNAL_ARGS)
 	 * should ensure the postmaster sees this as a crash, too, but no harm in
 	 * being doubly sure.)
 	 */
-	exit(2);
+	pthread_exit((void*)2);
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
@@ -1025,7 +1026,7 @@ RequestCheckpoint(int flags)
 				break;
 			}
 		}
-		else if (kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
+		else if (pthread_kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
 		{
 			if (ntries >= 20)	/* max wait 2.0 sec */
 			{

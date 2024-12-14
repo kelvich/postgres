@@ -81,7 +81,7 @@ typedef struct FixedParallelState
 	int			sec_context;
 	bool		is_superuser;
 	PGPROC	   *parallel_master_pgproc;
-	pid_t		parallel_master_pid;
+	pthread_t	parallel_master_pid;
 	BackendId	parallel_master_backend_id;
 
 	/* Mutex protects remaining fields. */
@@ -470,7 +470,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 
 	/* Configure a worker. */
 	memset(&worker, 0, sizeof(worker));
-	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %d",
+	snprintf(worker.bgw_name, BGW_MAXLEN, "parallel worker for PID %ld",
 			 MyProcPid);
 	snprintf(worker.bgw_type, BGW_MAXLEN, "parallel worker");
 	worker.bgw_flags =
