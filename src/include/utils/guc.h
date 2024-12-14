@@ -183,6 +183,12 @@ typedef void (*GucRealAssignHook) (double newval, void *extra);
 typedef void (*GucStringAssignHook) (const char *newval, void *extra);
 typedef void (*GucEnumAssignHook) (int newval, void *extra);
 
+typedef bool* (*GucBoolAddressHook) (void);
+typedef int* (*GucIntAddressHook) (void);
+typedef double* (*GucRealAddressHook) (void);
+typedef char** (*GucStringAddressHook) (void);
+typedef int* (*GucEnumAddressHook) (void);
+
 typedef const char *(*GucShowHook) (void);
 
 /*
@@ -433,5 +439,27 @@ extern void assign_search_path(const char *newval, void *extra);
 /* in access/transam/xlog.c */
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
+
+#define DEFINE_BOOL_GUC(guc)							\
+    static bool* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_INT_GUC(guc)								\
+	static int* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_REAL_GUC(guc)							\
+	static double* guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_STR_GUC(guc)								\
+	static char** guc##AddressHook(void) { return &guc; }
+
+#define DEFINE_ENUM_GUC(guc)							\
+	static int* guc##AddressHook(void) { return &guc; }
+
+
+#define DECLARE_BOOL_GUC(guc,default_value) NULL, default_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_INT_GUC(guc,default_value,min_value,max_value) NULL, default_value, min_value, max_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_REAL_GUC(guc,default_value,min_value,max_value) NULL, default_value, min_value, max_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_STR_GUC(guc,default_value) NULL, default_value, NULL, NULL, NULL, &guc##AddressHook
+#define DECLARE_ENUM_GUC(guc,default_value,options) NULL, default_value, options, NULL, NULL, NULL, &guc##AddressHook
 
 #endif							/* GUC_H */
