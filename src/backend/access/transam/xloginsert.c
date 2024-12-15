@@ -120,6 +120,10 @@ void
 XLogBeginInsert(void)
 {
 	Assert(max_registered_block_id == 0);
+
+	if (!mainrdata_last)
+		mainrdata_last = (XLogRecData *)&mainrdata_head;
+
 	Assert(mainrdata_last == (XLogRecData *) &mainrdata_head);
 	Assert(mainrdata_len == 0);
 
@@ -337,7 +341,6 @@ XLogRegisterData(char *data, int len)
 	 * we use the mainrdata_last pointer to track the end of the chain, so no
 	 * need to clear 'next' here.
 	 */
-
 	mainrdata_last->next = rdata;
 	mainrdata_last = rdata;
 
