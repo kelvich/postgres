@@ -44,7 +44,7 @@ session_local bool		proc_exit_inprogress = false;
  * This flag tracks whether we've called atexit() in the current process
  * (or in the parent postmaster).
  */
-static bool atexit_callback_setup = false;
+static bool atexit_callback_setup = true; /* do not perform at exit cleanup */
 
 /* local functions */
 static void proc_exit_prepare(int code);

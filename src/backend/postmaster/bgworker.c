@@ -792,7 +792,7 @@ StartBackgroundWorker(void)
 		 */
 
 		/* and go away */
-		proc_exit(1);
+		proc_exit(0);
 	}
 
 	/* We can now handle ereport(ERROR) */

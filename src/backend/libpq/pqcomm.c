@@ -307,6 +307,7 @@ socket_close(int code, Datum arg)
 		 * We do set sock to PGINVALID_SOCKET to prevent any further I/O,
 		 * though.
 		 */
+		close(MyProcPort->sock);
 		MyProcPort->sock = PGINVALID_SOCKET;
 	}
 }
