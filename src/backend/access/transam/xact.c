@@ -1803,7 +1803,7 @@ StartTransaction(void)
 	 * Let's just make sure the state stack is empty
 	 */
 	s = &TopTransactionStateData;
-	CurrentTransactionState = s;
+	CurrentTransactionStatePtr = s;
 
 	Assert(XactTopTransactionId == InvalidTransactionId);
 
@@ -4907,7 +4907,7 @@ PushTransaction(void)
 	s->prevXactReadOnly = XactReadOnly;
 	s->parallelModeLevel = 0;
 
-	CurrentTransactionState = s;
+	CurrentTransactionStatePtr = s;
 
 	/*
 	 * AbortSubTransaction and CleanupSubTransaction have to be able to cope
@@ -4936,7 +4936,7 @@ PopTransaction(void)
 	if (s->parent == NULL)
 		elog(FATAL, "PopTransaction with no parent");
 
-	CurrentTransactionState = s->parent;
+	CurrentTransactionStatePtr = s->parent;
 
 	/* Let's just make sure CurTransactionContext is good */
 	CurTransactionContext = s->parent->curTransactionContext;
