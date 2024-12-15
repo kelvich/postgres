@@ -69,7 +69,7 @@ struct PMSignalData
 	sig_atomic_t PMChildFlags[FLEXIBLE_ARRAY_MEMBER];
 };
 
-NON_EXEC_STATIC volatile PMSignalData *PMSignalState = NULL;
+volatile PMSignalData *PMSignalState = NULL;
 
 
 /*
@@ -185,7 +185,6 @@ bool
 ReleasePostmasterChildSlot(int slot)
 {
 	bool		result;
-
 	Assert(slot > 0 && slot <= PMSignalState->num_child_flags);
 	slot--;
 
