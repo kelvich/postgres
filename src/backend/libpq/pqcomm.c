@@ -227,6 +227,15 @@ pq_init(void)
 	AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, -1, NULL, NULL);
 }
 
+void pq_finalize()
+{
+	if (FeBeWaitSet)
+	{
+		FreeWaitEventSet(FeBeWaitSet);
+		FeBeWaitSet = NULL;
+	}
+}
+
 /* --------------------------------
  *		socket_comm_reset - reset libpq during error recovery
  *
