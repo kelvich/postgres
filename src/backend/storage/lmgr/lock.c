@@ -361,6 +361,33 @@ static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 							   BlockedProcsData *data);
 
 
+static void CreateLocalHash(void)
+{
+	HASHCTL		info;
+
+	MemSet(&info, 0, sizeof(info));
+
+	/*
+	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores lock
+	 * counts and resource owner information.
+	 *
+	 * The non-shared table could already exist in this process (this occurs
+	 * when the postmaster is recreating shared memory after a backend crash).
+	 * If so, delete and recreate it.  (We could simply leave it, since it
+	 * ought to be empty in the postmaster, but for safety let's zap it.)
+	 */
+	if (LockMethodLocalHash)
+		hash_destroy(LockMethodLocalHash);
+
+	info.keysize = sizeof(LOCALLOCKTAG);
+	info.entrysize = sizeof(LOCALLOCK);
+
+	LockMethodLocalHash = hash_create("LOCALLOCK hash",
+									  16,
+									  &info,
+									  HASH_ELEM | HASH_BLOBS);
+}
+
 /*
  * InitLocks -- Initialize the lock manager's data structures.
  *
@@ -431,25 +458,7 @@ InitLocks(void)
 	if (!found)
 		SpinLockInit(&FastPathStrongRelationLocks->mutex);
 
-	/*
-	 * Allocate non-shared hash table for LOCALLOCK structs.  This stores lock
-	 * counts and resource owner information.
-	 *
-	 * The non-shared table could already exist in this process (this occurs
-	 * when the postmaster is recreating shared memory after a backend crash).
-	 * If so, delete and recreate it.  (We could simply leave it, since it
-	 * ought to be empty in the postmaster, but for safety let's zap it.)
-	 */
-	if (LockMethodLocalHash)
-		hash_destroy(LockMethodLocalHash);
-
-	info.keysize = sizeof(LOCALLOCKTAG);
-	info.entrysize = sizeof(LOCALLOCK);
-
-	LockMethodLocalHash = hash_create("LOCALLOCK hash",
-									  16,
-									  &info,
-									  HASH_ELEM | HASH_BLOBS);
+	CreateLocalHash();
 }
 
 
@@ -598,6 +607,9 @@ LockHasWaiters(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	MemSet(&localtag, 0, sizeof(localtag)); /* must clear padding */
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
+
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
 
 	locallock = (LOCALLOCK *) hash_search(LockMethodLocalHash,
 										  (void *) &localtag,
@@ -752,6 +764,9 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	MemSet(&localtag, 0, sizeof(localtag)); /* must clear padding */
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
+
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
 
 	locallock = (LOCALLOCK *) hash_search(LockMethodLocalHash,
 										  (void *) &localtag,
@@ -1267,6 +1282,9 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		locallock->holdsStrongLockCount = false;
 		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
+
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
 
 	if (!hash_search(LockMethodLocalHash,
 					 (void *) &(locallock->tag),
@@ -1846,6 +1864,9 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	localtag.lock = *locktag;
 	localtag.mode = lockmode;
 
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
+
 	locallock = (LOCALLOCK *) hash_search(LockMethodLocalHash,
 										  (void *) &localtag,
 										  HASH_FIND, NULL);
@@ -2042,6 +2063,9 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks)
 		VirtualXactLockTableCleanup();
 
 	numLockModes = lockMethodTable->numLockModes;
+
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
 
 	/*
 	 * First we run through the locallock table and get rid of unwanted
@@ -2293,6 +2317,9 @@ LockReleaseSession(LOCKMETHODID lockmethodid)
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
 
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
+
 	hash_seq_init(&status, LockMethodLocalHash);
 
 	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
@@ -2321,6 +2348,9 @@ LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	{
 		HASH_SEQ_STATUS status;
 		LOCALLOCK  *locallock;
+
+		if (!LockMethodLocalHash)
+			CreateLocalHash();
 
 		hash_seq_init(&status, LockMethodLocalHash);
 
@@ -2420,6 +2450,9 @@ LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks)
 	{
 		HASH_SEQ_STATUS status;
 		LOCALLOCK  *locallock;
+
+		if (!LockMethodLocalHash)
+			CreateLocalHash();
 
 		hash_seq_init(&status, LockMethodLocalHash);
 
@@ -3061,6 +3094,9 @@ AtPrepare_Locks(void)
 	HASH_SEQ_STATUS status;
 	LOCALLOCK  *locallock;
 
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
+
 	/*
 	 * For the most part, we don't need to touch shared memory for this ---
 	 * all the necessary state information is in the locallock table.
@@ -3182,6 +3218,9 @@ PostPrepare_Locks(TransactionId xid)
 
 	/* This is a critical section: any error means big trouble */
 	START_CRIT_SECTION();
+
+	if (!LockMethodLocalHash)
+		CreateLocalHash();
 
 	/*
 	 * First we run through the locallock table and get rid of unwanted
