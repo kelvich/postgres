@@ -727,12 +727,13 @@ StartBackgroundWorker(void)
 	 * so we'd better make sure that we don't mess anything up that would
 	 * require that sort of cleanup.
 	 */
+#if 0
 	if ((worker->bgw_flags & BGWORKER_SHMEM_ACCESS) == 0)
 	{
 		dsm_detach_all();
 		PGSharedMemoryDetach();
 	}
-
+#endif
 	SetProcessingMode(InitProcessing);
 
 	/* Apply PostAuthDelay */
