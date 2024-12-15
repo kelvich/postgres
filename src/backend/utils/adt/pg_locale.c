@@ -155,6 +155,9 @@ pg_perm_setlocale(int category, const char *locale)
 	const char *envvar;
 	char	   *envbuf;
 
+	if (!IsPostmaster)
+		locale = NULL;
+
 #ifndef WIN32
 	result = setlocale(category, locale);
 #else
@@ -177,7 +180,7 @@ pg_perm_setlocale(int category, const char *locale)
 		result = setlocale(category, locale);
 #endif							/* WIN32 */
 
-	if (result == NULL)
+	if (result == NULL || !IsPostmaster)
 		return result;			/* fall out immediately on failure */
 
 	/*
@@ -266,6 +269,9 @@ check_locale(int category, const char *locale, char **canonname)
 {
 	char	   *save;
 	char	   *res;
+
+	if (!IsPostmaster && canonname == NULL)
+		return true;
 
 	if (canonname)
 		*canonname = NULL;		/* in case of failure */
