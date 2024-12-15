@@ -200,8 +200,8 @@ void
 MemoryContextDelete(MemoryContext context)
 {
 	AssertArg(MemoryContextIsValid(context));
-	/* We had better not be deleting TopMemoryContext ... */
-	Assert(context != TopMemoryContext);
+	/* For pthreads we should allow deletion of top memory context */
+	/* Assert(context != TopMemoryContext); */
 	/* And not CurrentMemoryContext, either */
 	Assert(context != CurrentMemoryContext);
 
